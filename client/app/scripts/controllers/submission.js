@@ -1,7 +1,6 @@
 GLClient.controller('SubmissionCtrl',
     ['$scope', '$rootScope', '$filter', '$location', '$timeout', '$modal', 'Authentication', 'Submission',
       function ($scope, $rootScope, $filter, $location, $timeout, $modal, Authentication, Submission) {
-
   $rootScope.invalidForm = true;
 
   $scope.context_id = $location.search().context;
@@ -229,9 +228,8 @@ controller('ReceiptController', ['$scope', '$location', 'Authentication', 'Whist
       }
 
       return ret;
-
     };
 
-    $scope.keycode = format_keycode(Authentication.keycode);
+    $scope.keycode = Authentication.receipt.value;
     $scope.formatted_keycode = format_keycode($scope.keycode);
 }]);

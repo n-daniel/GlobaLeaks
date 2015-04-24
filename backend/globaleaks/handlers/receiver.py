@@ -32,9 +32,11 @@ def receiver_serialize_receiver(receiver, language):
         'pgp_key_info': receiver.pgp_key_info,
         'pgp_key_fingerprint': receiver.pgp_key_fingerprint,
         'pgp_key_remove': False,
-        'pgp_key_public': receiver.pgp_key_public,
         'pgp_key_expiration': datetime_to_ISO8601(receiver.pgp_key_expiration),
         'pgp_key_status': receiver.pgp_key_status,
+        'pgp_key_public': receiver.pgp_key_public,
+        'pgp_e2e_public': receiver.pgp_e2e_public,
+        'pgp_e2e_private': receiver.pgp_e2e_private,
         'tip_notification': receiver.tip_notification,
         'ping_notification': receiver.ping_notification,
         'mail_address': receiver.user.mail_address,
@@ -44,11 +46,9 @@ def receiver_serialize_receiver(receiver, language):
         'password': u'',
         'old_password': u'',
         'language': receiver.user.language,
-        'timezone': receiver.user.timezone
+        'timezone': receiver.user.timezone,
+        'contexts': [c.id for c in receiver.contexts]
     }
-
-    for context in receiver.contexts:
-        ret_dict['contexts'].append(context.id)
 
     return get_localized_values(ret_dict, receiver, receiver.localized_strings, language)
 
@@ -120,6 +120,11 @@ def update_receiver_settings(store, receiver_id, request, language):
     receiver.tip_notification = acquire_bool(request['tip_notification'])
 
     pgp_options_parse(receiver, request)
+
+    #TODO: validate armored pgp keys
+
+    receiver.pgp_e2e_public = request['pgp_e2e_public']
+    receiver.pgp_e2e_private = request['pgp_e2e_private']
 
     return receiver_serialize_receiver(receiver, language)
 
@@ -220,10 +225,14 @@ def get_receivertip_list(store, receiver_id, language):
 
         preview_data = []
 
-        for s in rtip.internaltip.wb_steps:
-            for f in s['children']:
-                if f['preview']:
-                    preview_data.append(f)
+        try:
+            for s in rtip.internaltip.wb_steps:
+                for f in s['children']:
+                    if f['preview']:
+                        preview_data.append(f)
+        except:
+            # TODO E2E: handle the case of encrypted payload
+            pass
 
         single_tip_sum.update({'preview': preview_data})
         rtip_summary_list.append(single_tip_sum)

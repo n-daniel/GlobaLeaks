@@ -196,14 +196,22 @@ def transport_security_check(wrapped_handler_role):
 
 
 @transact_ro  # read only transact; manual commit on success needed
-def login_wb(store, receipt):
+def login_wb(store, authentication_sign):
     """
     Login wb return the WhistleblowerTip.id
     """
-    node = store.find(Node).one()
-    hashed_receipt = security.hash_password(receipt, node.receipt_salt)
-    wb_tip = store.find(WhistleblowerTip,
+
+    wb_tip = None
+    if len(authentication_sign) == 16:
+        node = store.find(Node).one()
+        hashed_receipt = security.hash_password(authentication_sign, node.receipt_salt)
+        wb_tip = store.find(WhistleblowerTip,
                         WhistleblowerTip.receipt_hash == unicode(hashed_receipt)).one()
+
+    else:
+        wb_tip = store.find(WhistleblowerTip,
+                        WhistleblowerTip.wb_signature == unicode(authentication_sign)).one()
+
 
     if not wb_tip:
         log.debug("Whistleblower login: Invalid receipt")

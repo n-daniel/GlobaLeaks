@@ -1,14 +1,48 @@
 "use strict";
 
 angular.module('resourceServices.authentication', [])
-  .factory('Authentication', ['$http', '$location', '$routeParams',
-                              '$rootScope', '$timeout', '$cookies',
-    function($http, $location, $routeParams, $rootScope, $timeout, $cookies) {
+  .factory('Authentication', ['$q', '$http', '$location', '$routeParams',
+                              '$rootScope', '$timeout', '$cookies', 'pkdf',
+    function($q, $http, $location, $routeParams, $rootScope, $timeout, $cookies, pkdf) {
       function Session(){
         var self = this;
 
+        $rootScope.ww_gl_password = function(password) {
+            var worker = new Worker('/scripts/ww_receiver_derivate_key.js');
+            var defer = $q.defer();
+            worker.onmessage = function(e) {
+                defer.resolve(e.data);
+                worker.terminate();
+            };
+            worker.postMessage([password, 4096, "this is the salt"]);
+            return defer.promise;
+        }
+
+        $rootScope.ww_gl_passphrase = function(passphrase) {
+            var worker = new Worker('/scripts/ww_receiver_derivate_key.js');
+            var defer = $q.defer();
+            worker.onmessage = function(e) {
+                defer.resolve(e.data);
+                worker.terminate();
+            };
+            worker.postMessage([passphrase, 4096, "this is another salt"]);
+            return defer.promise;
+        }
+
         $rootScope.login = function(username, password, role, cb) {
-          return $http.post('authentication', {'username': username,
+
+          if (role == 'receiver' && password != 'globaleaks') {
+            $rootScope.ww_gl_passphrase(password).then(function(wkReply) {
+              $rootScope.receiver_key_passphrase = wkReply;
+            });
+          }
+
+          $rootScope.ww_gl_password(password).then(function(wkReply) {
+            if (role == 'receiver' && password != 'globaleaks') {
+              password = wkReply;
+            }
+ 
+            return $http.post('/authentication', {'username': username,
                                                 'password': password,
                                                 'role': role})
             .success(function(response) {
@@ -45,14 +79,15 @@ angular.module('resourceServices.authentication', [])
 
               if ($routeParams.src) {
                 $location.path($routeParams.src);
-
               } else {
                 $location.path(self.auth_landing_page);
               }
 
               $location.search('');
+            });
 
-          });
+          }); // ww_gl_password
+
         };
 
         self.logout_performed = function () {
@@ -75,7 +110,7 @@ angular.module('resourceServices.authentication', [])
           }
         };
 
-        self.keycode = '';
+        self.receipt = {};
 
         $rootScope.logout = function() {
           // we use $http['delete'] in place of $http.delete due to
@@ -239,8 +274,8 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
 }]).
   // In here we have all the functions that have to do with performing
   // submission requests to the backend
-  factory('Submission', ['$q', '$resource', '$filter', '$location', '$rootScope', 'Authentication',
-  function($q, $resource, $filter, $location, $rootScope, Authentication) {
+  factory('Submission', ['$q', '$rootScope', '$resource', '$filter', '$location', 'Authentication', 'pkdf', 'whistleblower',
+  function($q, $rootScope, $resource, $filter, $location, Authentication, Node, Contexts, Receivers, pkdf, whistleblower) {
 
     var submissionResource = $resource('submission/:token_id/',
         {token_id: '@token_id'},
@@ -269,6 +304,10 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
       self.receivers = [];
       self.receivers_selected = {};
       self.uploading = false;
+      self.receivers_selected_keys = [];
+      
+      self.whistleblower_key = null;
+      self.receipt = pkdf.gl_receipt();
 
       var setCurrentContextReceivers = function(context_id, receivers_ids) {
         self.context = $filter('filter')($rootScope.contexts, {"id": context_id})[0];
@@ -297,6 +336,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
               self.receivers_selected[receiver.id] = true;
             }
           }
+
         });
 
       };
@@ -315,7 +355,10 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           context_id: self.context.id,
           wb_steps: self.context.steps,
           receivers: [],
-          human_captcha_answer: 0
+          human_captcha_answer: 0,
+          wb_e2e_public: "",
+          /* at the moment is just a fingerprint of the pubkey */
+          wb_signature: ""
         });
 
         self._submission.$save(function(submissionID){
@@ -344,29 +387,73 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           return;
         }
 
+        // Set the currently selected pgp pub keys
+        self.receivers_selected_keys = [];
+        angular.forEach(self.receivers_selected, function(selected, id){
+          if (selected) {
+            angular.forEach(self.receivers, function(receiver){
+              if (id == receiver.id) {
+                self.receivers_selected_keys.push(receiver.pgp_e2e_public);
+              }
+            });
+          }
+        });
+
+        // Set the currently selected receivers
+        self.receivers = [];
+        // remind this clean the collected list of receiver_id
         self._submission.receivers = [];
+
         angular.forEach(self.receivers_selected, function(selected, id){
           if (selected) {
             self._submission.receivers.push(id);
           }
         });
 
-        self._submission.finalize = true;
+        openpgp.config.show_comment = false;
+        openpgp.config.show_version = false;
 
-        self._submission.$update(function(result){
-          if (result) {
-            Authentication.keycode = self._submission.receipt;
-            $location.url("/receipt");
-          }
+        whistleblower.generate_key_from_receipt(self.receipt.value, function(wb_key) {
+          console.log(wb_key);
+          self.receipt.pgp = wb_key;
+          self.whistleblower_key = wb_key;
+          self.current_submission.finalize = true;
+          self.current_submission.wb_e2e_public = wb_key.publicKeyArmored;
+          self.current_submission.wb_signature = wb_key.key.primaryKey.fingerprint;
+          self.current_submission.is_e2e_encrypted = true;
+
+          //wb_key.privateKeyArmored;
+
+          var receivers_and_wb_keys = [];
+          angular.forEach(self.receivers_selected_keys, function(key) {
+            var r_key_pub = openpgp.key.readArmored(key).keys[0];
+            receivers_and_wb_keys.push(r_key_pub);
+          });
+          var wb_key_pub = openpgp.key.readArmored(wb_key.publicKeyArmored).keys[0];
+          receivers_and_wb_keys.push(wb_key_pub);
+
+          var wb_steps = JSON.stringify(self.current_submission.wb_steps);
+          openpgp.encryptMessage(receivers_and_wb_keys, wb_steps).then( function(pgp_wb_steps) {
+            var list_wb_steps = [];
+            list_wb_steps.push(pgp_wb_steps);
+            self.current_submission.wb_steps = list_wb_steps;
+
+            self.current_submission.$submit(function(result) {
+              if (result) {
+                Authentication.receipt = self.receipt;
+                $location.url("/receipt");
+              }
+            });
+
+          });
         });
-
       };
 
       fn(self);
     };
 }]).
-  factory('Tip', ['$resource', '$q',
-          function($resource, $q) {
+  factory('Tip', ['$resource', '$q', '$rootScope', 'Receivers', 'ReceiverPreferences',
+  function($resource, $rootScope, Receivers, ReceiverPreferences) {
 
     var tipResource = $resource('rtip/:tip_id', {tip_id: '@id'}, {update: {method: 'PUT'}});
     var receiversResource = $resource('rtip/:tip_id/receivers', {tip_id: '@tip_id'}, {});
@@ -378,10 +465,14 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
 
       self.tip = tipResource.get(tipID, function (tip) {
         tip.receivers = receiversResource.query(tipID);
-        tip.comments = commentsResource.query(tipID);
-        tip.messages = messageResource.query(tipID);
+        tip.comments = [];
+        tip.messages = [];
+        tip.encrypted_comments = commentsResource.query(tipID);
+        tip.encrypted_messages = messageResource.query(tipID);
 
         $q.all([tip.receivers.$promise, tip.comments.$promise, tip.messages.$promise]).then(function() {
+
+/*
           tip.newComment = function(content) {
             var c = new commentsResource(tipID);
             c.content = content;
@@ -397,14 +488,99 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
               tip.messages.unshift(newMessage);
             });
           };
+*/
 
-          fn(tip);
+          self.tip.newComment = function(content) {
+            openpgp.encryptMessage(self.receivers_and_wb_keys, content).then(function(pgp_content) {
+              var c = new commentsResource(tipID);
+              c.content = pgp_content;
+              self.clearc = content;
+              c.$save(function(newComment) {
+                newComment.content = self.clearc;
+                self.tip.comments.unshift(newComment);
+                self.clearc = '';
+              });
+            });
+          };
+
+          self.tip.newMessage = function(content) {
+            openpgp.encryptMessage(self.receivers_and_wb_keys, content).then(function(pgp_content) {
+              var m = new messageResource(tipID);
+              m.content = pgp_content;
+              self.clearm = content;
+              m.$save(function(newMessage) {
+                self.tip.messages.unshift(newMessage);
+                self.clearm = '';
+              });
+            });
+          };
+
+          ReceiverPreferences.get(function(preferences){
+            // decrypt receiver priv key
+            self.privateKey = openpgp.key.readArmored(preferences.pgp_e2e_private).keys[0];
+            var ret = self.privateKey.decrypt($rootScope.receiver_key_passphrase);
+
+            if (typeof(result.wb_steps[0]) == 'string'
+                && result.wb_steps[0].indexOf("-----BEGIN PGP MESSAGE-----") == 0) {
+              var pgpMessage = openpgp.message.readArmored(result.wb_steps[0]);
+              openpgp.decryptMessage(self.privateKey, pgpMessage).then(function(decr_wb_steps) {
+                 var json_wb_steps = JSON.parse(decr_wb_steps);
+                 self.tip.wb_steps = json_wb_steps;
+               });
+             } else {
+               self.tip.wb_steps = result.wb_steps;
+             }
+
+            // build receivers and wb pub keys list
+            self.receivers_and_wb_keys = [];
+            angualar.forEach(receiversCollection, function(receiver) {
+                var r_key_pub = openpgp.key.readArmored(receiver.pgp_e2e_public).keys[0];
+                self.receivers_and_wb_keys.push(r_key_pub);
+            });
+            var wb_key_pub = openpgp.key.readArmored( self.tip.wb_e2e_public ).keys[0];
+            self.receivers_and_wb_keys.push(wb_key_pub);
+
+            var decrypted_comments = angular.copy(self.tip.encrypted_comments);
+            angular.forEach(decrypted_comments, function(comment) {
+              if (typeof(comment.content) == 'string'
+                  && comment.content.indexOf("-----BEGIN PGP MESSAGE-----") == 0) {
+                var pgpMessage = openpgp.message.readArmored(comment.content);
+                openpgp.decryptMessage(self.privateKey, pgpMessage).then(function(decr_content) {
+                  comment.content = decr_content;
+                }, function(error) {
+                  comment.content = 'decryptMessage error: ' + error;
+                });
+              }
+            });
+            self.tip.comments = decrypted_comments;
+
+            var decrypted_messages = angular.copy(self.tip.encrypted_messages);
+            angular.forEach(decrypted_messages, function(message) {
+              if (typeof(message.content) == 'string'
+                  && message.content.indexOf("-----BEGIN PGP MESSAGE-----") == 0) {
+                var pgpMessage = openpgp.message.readArmored(message.content);
+                openpgp.decryptMessage(self.privateKey, pgpMessage).then(function(decr_content) {
+                  message.content = decr_content;
+                }, function(error) {
+                  message.content = 'decryptMessage error: ' + error;
+                });
+              }
+            });
+            self.tip.messages = decrypted_messages;
+
+            fn(tip);
+          });
         });
+
       });
+
     };
-}]).
-  factory('WBTip', ['$resource', '$q', '$rootScope',
-          function($resource, $q, $rootScope) {
+  }]).
+
+  factory('WBTip', ['$resource', 'Receivers', 'Authentication',
+  function($resource, Receivers, Authentication) {
+
+    self.receipt = Authentication.receipt;
 
     var tipResource = $resource('wbtip', {}, {update: {method: 'PUT'}});
     var receiversResource = $resource('wbtip/receivers', {}, {});
@@ -416,8 +592,10 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
 
       self.tip = tipResource.get(function (tip) {
         tip.receivers = receiversResource.query();
-        tip.comments = commentsResource.query();
+        tip.comments = [];
         tip.messages = [];
+        tip.encrypted_comments = commentsResource.query(tipID);
+        tip.encrypted_messages = messageResource.query(tipID);
 
         $q.all([tip.receivers.$promise, tip.comments.$promise]).then(function() {
           tip.msg_receiver_selected = null;
@@ -434,6 +612,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
             });
           });
 
+/*
           tip.newComment = function(content) {
             var c = new commentsResource();
             c.content = content;
@@ -457,18 +636,106 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
               });
             }
           };
+*/
 
-          fn(tip);
+          var pgpMessage = openpgp.message.readArmored(tip.wb_steps[0]);
+          self.privateKey = openpgp.key.readArmored(keyPair.privateKeyArmored).keys[0];
+
+          openpgp.decryptMessage(self.privateKey, pgpMessage).then(function(decr_wb_steps) {
+            var json_wb_steps = JSON.parse(decr_wb_steps);
+            self.tip.wb_steps = json_wb_steps;
+            self.receivers_and_wb_keys = [];
+
+            var wb_key_pub = openpgp.key.readArmored(self.tip.wb_e2e_public).keys[0];
+            self.receivers_and_wb_keys.push(wb_key_pub);
+
+            // build receivers and wb pub keys list
+            angular.forEach($rootScope.receivers, function(receiver) {
+              var r_key_pub = openpgp.key.readArmored(receiver.pgp_e2e_public).keys[0];
+              self.receivers_and_wb_keys.push(r_key_pub);
+            });
+
+            self.tip.newComment = function(content) {
+              openpgp.encryptMessage(self.receivers_and_wb_keys, content).then( function(pgp_content) {
+                var c = new commentsResource();
+                c.content = pgp_content;
+                self.clearc = content;
+                c.$save(function(newComment) {
+                  newComment.content = self.clearc;
+                  self.tip.comments.unshift(newComment);
+                  self.clearc = '';
+                });
+              });
+            };
+
+            self.tip.newMessage = function(content) {
+              openpgp.encryptMessage(self.receivers_and_wb_keys, content).then( function(pgp_content) {
+                var m = new messageResource({id: self.tip.msg_receiver_selected});
+                m.content = pgp_content;
+                self.clearm = content;
+                m.$save(function(newMessage) {
+                  self.tip.messages.unshift(newMessage);
+                  self.clearm = '';
+                });
+              });
+            };
+
+            self.tip.updateMessages = function () {
+              if (self.tip.msg_receiver_selected) {
+                messageResource.query({id: self.tip.msg_receiver_selected}, function (messageCollection) {
+                  angular.forEach(messageCollection, function(message) {
+                    if ( message.content.indexOf("-----BEGIN PGP MESSAGE-----") > -1 ) {
+                      var pgpMessage = openpgp.message.readArmored(message.content);
+                      openpgp.decryptMessage(self.privateKey, pgpMessage).then(function(decr_content) {
+                        message.content = decr_content;
+                      });
+                    }
+                  });
+                  self.tip.messages = messageCollection;
+                });
+              };
+            };
+
+            var decrypted_comments = angular.copy(self.tip.encrypted_comments);
+            angular.forEach(decrypted_comments, function(comment) {
+              if (typeof(comment.content) == 'string'
+                  && comment.content.indexOf("-----BEGIN PGP MESSAGE-----") == 0) {
+                var pgpMessage = openpgp.message.readArmored(comment.content);
+                openpgp.decryptMessage(self.privateKey, pgpMessage).then(function(decr_content) {
+                  comment.content = decr_content;
+                }, function(error) {
+                  comment.content = 'decryptMessage error: ' + error;
+                });
+              }
+            });
+            self.tip.comments = decrypted_comments;
+
+            fn(self.tip);
+
+          });
         });
       });
     };
 }]).
-  factory('WhistleblowerTip', ['$rootScope',
-    function($rootScope){
+  factory('WBReceipt', ['$rootScope', 'Authentication', 'whistleblower',
+    function($rootScope, Authentication, whistleblower){
     return function(keycode, fn) {
-      $rootScope.login('', keycode, 'wb').then(function() {
-        fn();
-      });
+      function login() {
+        var fp = Authentication.receipt.pgp.key.primaryKey.fingerprint;
+        $rootScope.login('', fp, 'wb', function() {
+          fn();
+        });
+      }
+      var self = this;
+      if (Authentication.receipt.pgp) {
+        login();
+      } else {
+        whistleblower.generate_key_from_receipt(keycode,
+          function(wb_key) {
+            Authentication.receipt.pgp = wb_key;
+            login();
+        });
+      }
     };
 }]).
   factory('ReceiverPreferences', ['$resource', function($resource) {
@@ -650,6 +917,9 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         receiver.pgp_key_expiration = '';
         receiver.pgp_key_status = 'ignored';
         receiver.pgp_enable_notification = false;
+        receiver.pgp_key_public = '';
+        receiver.pgp_e2e_public = '';
+        receiver.pgp_e2e_private = '';
         receiver.presentation_order = 0;
         receiver.state = 'enable';
         receiver.configuration = 'default';

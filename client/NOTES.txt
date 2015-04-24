@@ -3,6 +3,7 @@
 ### Setting up development environment
 
    npm install -d
+   bower cache clean
    bower update -f
 
    more infos at: https://github.com/globaleaks/GlobaLeaks/wiki/Setting-up-development-environment
@@ -13,7 +14,7 @@
 
 ### Helps for lazy developers
 
-   npm install -d && bower update -f && grunt build
+   npm install -d && bower cache clean && bower update -f && grunt build
 
 ### Fetch updated translation
 
@@ -38,3 +39,20 @@ In GLClient run the mocha tests:
 
     node_modules/mocha/bin/mocha -R list tests/glbackend/test_00*
 
+### Run protractor tests
+
+Install protactor with npm:
+
+  npm install -g protractor
+
+Then install the webdriver:
+
+  webdriver-manager update
+
+To start the tests, first start the web driver:
+
+  webdriver-manager start
+
+Then run the tests with:
+
+  protractor tests/glclient/setup-wizard-config.js

@@ -75,6 +75,7 @@ CREATE TABLE internalfile (
     size INTEGER NOT NULL,
     new INTEGER NOT NULL,
     internaltip_id VARCHAR NOT NULL,
+    is_e2e_encrypted INTEGER NOT NULL,
     FOREIGN KEY(internaltip_id) REFERENCES internaltip(id) ON DELETE CASCADE,
     PRIMARY KEY (id)
 );
@@ -104,6 +105,8 @@ CREATE TABLE internaltip (
     creation_date VARCHAR NOT NULL,
     expiration_date VARCHAR NOT NULL,
     wb_steps BLOB,
+    wb_e2e_public VARCHAR,
+    is_e2e_encrypted INTEGER NOT NULL,
     last_activity VARCHAR,
     context_id VARCHAR NOT NULL,
     new INTEGER NOT NULL,
@@ -157,6 +160,8 @@ CREATE TABLE node (
     header_title_homepage BLOB NOT NULL,
     header_title_submissionpage BLOB NOT NULL,
     header_title_receiptpage BLOB NOT NULL,
+    file_encryption_e2e INTEGER NOT NULL,
+    submission_data_e2e INTEGER NOT NULL,
     landing_page VARCHAR NOT NULL CHECK (landing_page IN ('homepage', 'submissionpage')),
     show_contexts_in_alphabetical_order INTEGER NOT NULL,
     PRIMARY KEY (id)
@@ -224,8 +229,11 @@ CREATE TABLE receiver (
     pgp_key_status VARCHAR NOT NULL CHECK (pgp_key_status IN ('disabled', 'enabled')),
     pgp_key_info VARCHAR,
     pgp_key_fingerprint VARCHAR,
-    pgp_key_public VARCHAR,
     pgp_key_expiration INTEGER,
+    pgp_key_public VARCHAR,
+    pgp_key_private VARCHAR,
+    pgp_e2e_public VARCHAR,
+    pgp_e2e_private VARCHAR,
     presentation_order INTEGER,
     PRIMARY KEY (id),
     UNIQUE(name),
@@ -300,7 +308,8 @@ CREATE TABLE whistleblowertip (
     access_counter INTEGER NOT NULL,
     internaltip_id VARCHAR NOT NULL,
     last_access VARCHAR,
-    receipt_hash VARCHAR NOT NULL,
+    wb_signature VARCHAR,
+    receipt_hash VARCHAR,
     PRIMARY KEY (id),
     FOREIGN KEY(internaltip_id) REFERENCES internaltip(id) ON DELETE CASCADE
 );

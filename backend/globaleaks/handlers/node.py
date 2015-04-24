@@ -96,6 +96,8 @@ def anon_serialize_node(store, language):
         'landing_page': node.landing_page,
         'show_contexts_in_alphabetical_order': node.show_contexts_in_alphabetical_order,
         'accept_submissions': GLSetting.memory_copy.accept_submissions,
+        'file_encryption_e2e': node.file_encryption_e2e,
+        'submission_data_e2e': node.submission_data_e2e
     }
 
     return get_localized_values(ret_dict, node, node.localized_strings, language)
@@ -238,6 +240,7 @@ def anon_serialize_receiver(receiver, language):
         'configuration': receiver.configuration,
         'presentation_order': receiver.presentation_order,
         'pgp_key_status': receiver.pgp_key_status,
+        "pgp_e2e_public": receiver.pgp_e2e_public,
         'contexts': [c.id for c in receiver.contexts]
     }
 

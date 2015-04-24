@@ -9,6 +9,7 @@
 #
 # Call also the FileProcess working point, in order to verify which
 # kind of file has been submitted.
+import os
 import sys
 
 import os
@@ -17,7 +18,7 @@ from globaleaks.jobs.base import GLJob
 from globaleaks.models import InternalFile, InternalTip, ReceiverTip, \
                               ReceiverFile
 from globaleaks.settings import transact, transact_ro, GLSetting
-from globaleaks.utils.utility import log
+from globaleaks.utils.utility import log, datetime_to_ISO8601
 from globaleaks.security import GLBPGP, GLSecureFile
 from globaleaks.handlers.admin import admin_serialize_receiver
 from globaleaks.third_party.rstr import xeger
@@ -28,11 +29,11 @@ __all__ = ['DeliverySchedule']
 def serialize_internalfile(ifile):
     ifile_dict = {
         'id': ifile.id,
-        'internaltip_id' : ifile.internaltip_id,
-        'name' : ifile.name,
-        'file_path' : ifile.file_path,
-        'content_type' : ifile.content_type,
-        'size' : ifile.size,
+        'internaltip_id': ifile.internaltip_id,
+        'name': ifile.name,
+        'file_path': ifile.file_path,
+        'content_type': ifile.content_type,
+        'size': ifile.size,
     }
 
     return ifile_dict
@@ -54,16 +55,16 @@ def get_files_by_itip(store, itip_id):
 
 def serialize_receiverfile(rfile):
     rfile_dict = {
-        'id' : rfile.id,
-        'internaltip_id' : rfile.internaltip_id,
-        'internalfile_id' : rfile.internalfile_id,
-        'receiver_id' : rfile.receiver_id,
-        'receivertip_id' : rfile.receivertip_id,
-        'file_path' : rfile.file_path,
-        'size' : rfile.size,
-        'downloads' : rfile.downloads,
-        'last_access' : rfile.last_access,
-        'status' : rfile.status,
+        'id': rfile.id,
+        'internaltip_id': rfile.internaltip_id,
+        'internalfile_id': rfile.internalfile_id,
+        'receiver_id': rfile.receiver_id,
+        'receivertip_id': rfile.receivertip_id,
+        'file_path': rfile.file_path,
+        'size': rfile.size,
+        'downloads': rfile.downloads,
+        'last_access': rfile.last_access,
+        'status': rfile.status,
     }
 
     return rfile_dict
@@ -101,10 +102,11 @@ def receiverfile_planning(store):
             receiver_desc = admin_serialize_receiver(receiver, GLSetting.memory_copy.language)
 
             map_info = {
-                'receiver' : receiver_desc,
-                'path' : filex.file_path,
-                'size' : filex.size,
-                'status' : u'reference'
+                'receiver': receiver_desc,
+                'path': filex.file_path,
+                'size': filex.size,
+                'status': u'reference',
+                'is_e2e_encrypted': filex.is_e2e_encrypted
             }
 
             # AS KEY, file path is used to keep track of the original
@@ -211,11 +213,15 @@ def encrypt_where_available(receivermap):
         [ { 'receiver' : receiver_desc, 'path' : file_path, 'size' : file_size }, .. ]
     @return: return True if plaintex version of file must be created.
     """
-
     retcode = True
 
     for rcounter, rfileinfo in enumerate(receivermap):
-        if rfileinfo['receiver']['pgp_key_status'] == u'enabled':
+        if rfileinfo['is_e2e_encrypted']:
+            log.debug("End2End encryption: disable PGP End2Site encryption")
+            rfileinfo['status'] = u'reference'
+            retcode = False
+        elif rfileinfo['receiver']['pgp_key_status'] == u'enabled':
+
             try:
                 new_path, new_size = fsops_pgp_encrypt(rfileinfo['path'], rfileinfo['receiver'])
 

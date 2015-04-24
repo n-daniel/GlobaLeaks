@@ -239,8 +239,10 @@ class InternalTip(Model):
     wb_steps = JSON()
     expiration_date = DateTime()
     last_activity = DateTime(default_factory=datetime_null)
-
     new = Int(default=True)
+
+    wb_e2e_public = Unicode()
+    is_e2e_encrypted = Bool()
 
 
 class ReceiverTip(Model):
@@ -259,7 +261,6 @@ class ReceiverTip(Model):
     notification_date = DateTime()
 
     label = Unicode(validator=shortlocal_v, default=u"")
-
     new = Int(default=True)
 
     unicode_keys = ['label']
@@ -274,9 +275,10 @@ class WhistleblowerTip(Model):
     """
     internaltip_id = Unicode()
     # internaltip = Reference(WhistleblowerTip.internaltip_id, InternalTip.id)
-    receipt_hash = Unicode()
     last_access = DateTime(default_factory=datetime_null)
     access_counter = Int(default=0)
+    wb_signature = Unicode()
+    receipt_hash = Unicode()
 
 
 class ReceiverFile(Model):
@@ -318,11 +320,11 @@ class InternalFile(Model):
 
     name = Unicode(validator=longtext_v)
     file_path = Unicode()
-
     content_type = Unicode()
     size = Int()
-
     new = Int(default=True)
+
+    is_e2e_encrypted = Bool()
 
 
 class Comment(Model):
@@ -403,6 +405,8 @@ class Node(Model):
     can_postpone_expiration = Bool(default=False)
     can_delete_submission = Bool(default=False)
 
+    file_encryption_e2e = Bool(default=True)
+    submission_data_e2e = Bool(default=True)
     ahmia = Bool(default=False)
     wizard_done = Bool(default=False)
 
@@ -586,12 +590,17 @@ class Receiver(Model):
     # of PGP key fields
     pgp_key_info = Unicode()
     pgp_key_fingerprint = Unicode()
+
     pgp_key_public = Unicode()
     pgp_key_expiration = DateTime()
-
     pgp_key_status = Unicode()
     # pgp_statuses: 'disabled', 'enabled'
 
+    pgp_e2e_public  = Unicode()
+    pgp_e2e_private = Unicode()
+
+    # Can be changed only by admin (but also differ from username!)
+    mail_address = Unicode()
     # Can be changed by the user itself
     ping_mail_address = Unicode()
 

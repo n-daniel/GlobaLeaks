@@ -7,6 +7,7 @@
 #   by an HTTP client in /submission URI
 
 import copy
+from globaleaks.third_party.rstr import rstr
 
 from twisted.internet.defer import inlineCallbacks
 from globaleaks.settings import transact, GLSetting
@@ -20,7 +21,6 @@ from globaleaks.handlers.authentication import transport_security_check, unauthe
 from globaleaks.utils.token import Token, TokenList
 from globaleaks.rest import requests
 from globaleaks.utils.utility import log, utc_future_date, datetime_now, datetime_to_ISO8601
-from globaleaks.third_party import rstr
 from globaleaks.rest import errors
 from globaleaks.anomaly import Alarm
 
@@ -33,10 +33,12 @@ def wb_serialize_internaltip(internaltip):
         'expiration_date': datetime_to_ISO8601(internaltip.expiration_date),
         'wb_steps': internaltip.wb_steps,
         'files': [f.id for f in internaltip.internalfiles],
-        'receivers': [r.id for r in internaltip.receivers]
+        'receivers': [r.id for r in internaltip.receivers],
+        'wb_e2e_public': internaltip.wb_e2e_public
     }
 
     return response
+
 
 def db_create_receivertip(store, receiver, internaltip):
     """
@@ -52,18 +54,9 @@ def db_create_receivertip(store, receiver, internaltip):
 
     return receivertip.id
 
-def db_create_whistleblower_tip(store, internaltip):
-    """
-    The plaintext receipt is returned only now, and then is
-    stored hashed in the WBtip table
-    """
+
+def db_create_whistleblower_tip(store, wb_signature, internaltip_id):
     wbtip = WhistleblowerTip()
-
-    node = store.find(Node).one()
-
-    receipt = unicode(rstr.xeger(GLSetting.receipt_regexp))
-
-    wbtip.receipt_hash = security.hash_password(receipt, node.receipt_salt)
     wbtip.access_counter = 0
     wbtip.internaltip_id = internaltip.id
 
@@ -80,6 +73,15 @@ def db_create_whistleblower_tip(store, internaltip):
         log.debug("The finalized submissions had created %d ReceiverTip(s)" % len(created_rtips))
 
     return receipt
+
+
+def hybrid_get_receipt_hash(store):
+    """
+    """
+    node = store.find(Node).one()
+    return_value_receipt = unicode( rstr.xeger(node.receipt_regexp) )
+    receipt_hash = security.hash_password(return_value_receipt, node.receipt_salt)
+    return receipt_hash, return_value_receipt
 
 
 @transact
@@ -186,7 +188,24 @@ def db_create_submission(store, token, request, language):
     submission.context_id = context.id
     submission.creation_date = datetime_now()
 
-    store.add(submission)
+    # the fingerprint / signature is associated to WhistleblowerTip
+    submission.wb_e2e_public = request['wb_e2e_public']
+
+    # This value is the copy of the node level setting, that can change in the time.
+    submission.is_e2e_encrypted = GLSetting.memory_copy.submission_data_e2e
+
+    if GLSetting.memory_copy.submission_data_e2e:
+        log.debug("End2End enabled node level, wb_steps len #%d (has to be 1) first 20bytes: %s" %(
+            len(request['wb_steps']),
+            request['wb_steps'][0][:20]))
+    else:
+        log.debug("End2End DIS-abled node level, wb_steps len #%d" % (len(request['wb_steps'])))
+
+    try:
+        store.add(submission)
+    except Exception as excep:
+        log.err("Storm/SQL Error: %s (create_submission)" % excep)
+        raise errors.InternalServerError("Unable to commit on DB")
 
     try:
         for filedesc in token.uploaded_files:
@@ -210,7 +229,6 @@ def db_create_submission(store, token, request, language):
     try:
         wb_steps = request['wb_steps']
         steps = db_get_context_steps(store, context.id, language)
-        verify_steps(steps, wb_steps)
         submission.wb_steps = wb_steps
     except Exception as excep:
         log.err("Submission create: fields validation fail: %s" % excep)

@@ -58,7 +58,9 @@ SubmissionDesc = {
     'context_id': uuid_regexp,
     'wb_steps': [ WBStepElem ],
     'human_captcha_answer': int,
-    'receivers': [uuid_regexp]
+    'receivers': [uuid_regexp],
+    'wb_e2e_public': unicode,
+    'wb_signature': unicode,
 }
 
 ReceiverReceiverDesc = {
@@ -75,6 +77,8 @@ ReceiverReceiverDesc = {
     'pgp_key_info': unicode,
     'pgp_key_public': unicode,
     'pgp_key_status': unicode,
+    'pgp_e2e_public': unicode,
+    'pgp_e2e_private': unicode,
     "tip_notification": bool,
     "ping_notification": bool,
     "language": unicode,
@@ -141,7 +145,9 @@ AdminNodeDesc = {
     'header_title_submissionpage': unicode,
     'header_title_receiptpage': unicode,
     'landing_page': landing_page_regexp,
-    'show_contexts_in_alphabetical_order': bool
+	'show_contexts_in_alphabetical_order': bool,
+    'file_encryption_e2e': bool,
+    'submission_data_e2e': bool,
 }
 
 AdminNotificationDesc = {
@@ -224,6 +230,9 @@ AdminReceiverDesc = {
     'pgp_key_info': unicode,
     'pgp_key_public': unicode,
     'pgp_key_status': unicode,
+    'pgp_key_public': unicode,
+    'pgp_e2e_public': unicode,
+    'pgp_e2e_private': unicode,
     'presentation_order': int,
     "language": unicode,
     "timezone": int

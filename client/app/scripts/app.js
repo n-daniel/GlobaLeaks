@@ -11,6 +11,7 @@ var GLClient = angular.module('GLClient', [
     'resourceServices',
     'submissionUI',
     'pascalprecht.translate',
+    'e2e',
     'GLClientFilters'
   ]).
   config(['$routeProvider', '$translateProvider', '$tooltipProvider',

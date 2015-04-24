@@ -82,7 +82,11 @@ def db_admin_serialize_node(store, language):
         'admin_language': admin.language,
         'admin_timezone': admin.timezone,
         'enable_custom_privacy_badge': node.enable_custom_privacy_badge,
+        'custom_privacy_badge_tor': node.custom_privacy_badge_tor,
+        'custom_privacy_badge_none': node.custom_privacy_badge_none,
         'landing_page': node.landing_page,
+        'file_encryption_e2e': node.file_encryption_e2e,
+        'submission_data_e2e': node.submission_data_e2e,
         'show_contexts_in_alphabetical_order': node.show_contexts_in_alphabetical_order
     }
 
@@ -276,12 +280,15 @@ def admin_serialize_receiver(receiver, language):
         'state': receiver.user.state,
         'configuration': receiver.configuration,
         'contexts': [c.id for c in receiver.contexts],
-        'pgp_key_info': receiver.pgp_key_info,
         'pgp_key_public': receiver.pgp_key_public,
+        'pgp_key_private': '',
         'pgp_key_remove': False,
+        'pgp_key_info': receiver.pgp_key_info,
         'pgp_key_fingerprint': receiver.pgp_key_fingerprint,
         'pgp_key_expiration': datetime_to_ISO8601(receiver.pgp_key_expiration),
         'pgp_key_status': receiver.pgp_key_status,
+        'pgp_e2e_public': '',
+        'pgp_e2e_private': '',
         'tip_notification': receiver.tip_notification,
         'ping_notification': receiver.ping_notification,
         'presentation_order': receiver.presentation_order,
