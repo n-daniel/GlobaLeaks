@@ -201,47 +201,18 @@ angular.module('e2e', []).
     return {
       names: wb_names,
       generate_key_from_receipt: function(receipt, cb) {
-
-        generate_deterministic_seed = function(receipt) {
-            var worker = new Worker('/scripts/ww_whistleblower_derivate_key.js');
-            var defer = $q.defer();
-            worker.onmessage = function(e) {
-                defer.resolve(e.data);
-                worker.terminate();
-            };
-            worker.postMessage([receipt]);
-            return defer.promise;
-        }
-        //var wb_name = wb_names[Math.floor(Math.random() * wb_names.length)];
-
-        generate_deterministic_seed(receipt).then( function(d_seed) {
-          function Seed() {
-            var self = this;
-            self.offset = 0;
-            self.seed = d_seed;
-
-            function nextBytes(byteArray) {
-              for (var n = 0; n < byteArray.length; n++) {
-                byteArray[n] = self.seed[self.offset % self.seed.length];
-                self.offset += 1;
-              }
-            }
-            this.nextBytes = nextBytes;
-          }
-
-          //var workerAvailable = openpgp.initWorker('/components/openpgpjs/dist/openpgp.worker.js');
-          //openpgp.getWorker().generateKeyPair({
-          openpgp.generateKeyPair({
-            numBits: 2048,
-            userId: "wb@antani.gov",
-            unlocked: true,
-            created: new Date(42),
-            //prng: Seed()
-          }).then(function(keyPair){
-            keyPair.key.primaryKey.created = new Date(42);
-            keyPair.key.subKeys[0].subKey.created = new Date(42);
-            cb(keyPair);
-          });
+        var workerAvailable = openpgp.initWorker('/scripts/crypto/ww_whistleblower_deterministic_key.js');
+        openpgp.getWorker().generateKeyPair({
+          numBits: 2048,
+          userId: "wb@antani.gov",
+          unlocked: true,
+          created: new Date(42),
+          salt: "salt",
+          receipt: receipt
+        }).then(function(keyPair){
+          keyPair.key.primaryKey.created = new Date(42);
+          keyPair.key.subKeys[0].subKey.created = new Date(42);
+          cb(keyPair);
         });
       }
     }

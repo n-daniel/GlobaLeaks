@@ -8,7 +8,7 @@ angular.module('resourceServices.authentication', [])
         var self = this;
 
         $rootScope.ww_gl_password = function(password) {
-            var worker = new Worker('/scripts/ww_receiver_derivate_key.js');
+            var worker = new Worker('/scripts/crypto/ww_receiver_derivate_password.js');
             var defer = $q.defer();
             worker.onmessage = function(e) {
                 defer.resolve(e.data);
@@ -19,7 +19,7 @@ angular.module('resourceServices.authentication', [])
         }
 
         $rootScope.ww_gl_passphrase = function(passphrase) {
-            var worker = new Worker('/scripts/ww_receiver_derivate_key.js');
+            var worker = new Worker('/scripts/crypto/ww_receiver_derivate_password.js');
             var defer = $q.defer();
             worker.onmessage = function(e) {
                 defer.resolve(e.data);
@@ -410,19 +410,13 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           }
         });
 
-        openpgp.config.show_comment = false;
-        openpgp.config.show_version = false;
-
         whistleblower.generate_key_from_receipt(self.receipt.value, function(wb_key) {
-          console.log(wb_key);
           self.receipt.pgp = wb_key;
           self.whistleblower_key = wb_key;
           self.current_submission.finalize = true;
           self.current_submission.wb_e2e_public = wb_key.publicKeyArmored;
           self.current_submission.wb_signature = wb_key.key.primaryKey.fingerprint;
           self.current_submission.is_e2e_encrypted = true;
-
-          //wb_key.privateKeyArmored;
 
           var receivers_and_wb_keys = [];
           angular.forEach(self.receivers_selected_keys, function(key) {
@@ -446,7 +440,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
             });
 
           });
-        });
+      };
       };
 
       fn(self);
