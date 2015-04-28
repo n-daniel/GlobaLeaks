@@ -304,6 +304,20 @@ module.exports = function(grunt) {
     fs = require('fs'),
     Gettext = require("node-gettext")
 
+  grunt.registerTask('copyBowerSources', function() {
+    var files = [
+      ['app/components/scrypt/index.js', 'app/scripts/crypto/scrypt.js'],
+      ['app/components/openpgpjs/dist/openpgp.min.js', 'app/scripts/crypto/openpgp.min.js'],
+      ['app/components/openpgpjs/dist/openpgp.worker.min.js', 'app/scripts/crypto/openpgp.worker.min.js']
+    ]
+
+    grunt.file.mkdir('app/scripts/crypto');
+
+    for (var x in files) {
+        grunt.file.copy(files[x][0], files[x][1])
+    }
+  });
+
   grunt.registerTask('cleanupWorkingDirectory', function() {
     var rm_rf = function(dir) {
       var s = fs.statSync(dir);
@@ -324,7 +338,16 @@ module.exports = function(grunt) {
         grunt.file.copy('tmp/' + files[x], 'build/' + files[x])
     }
 
-    var dirs = ['data', 'fonts', 'img', 'l10n']
+    var dirs = ['data', 'fonts', 'img', 'l10n', 'scripts']
+    for (var x in dirs) {
+      grunt.file.recurse('tmp/' + dirs[x], function(absdir, rootdir, subdir, filename) {
+        grunt.file.copy(absdir, path.join('build/' + dirs[x], subdir || '', filename || ''));
+      });
+    }
+
+    grunt.file.mkdir('build/scripts');
+
+    var dirs = ['scripts/crypto']
     for (var x in dirs) {
       grunt.file.recurse('tmp/' + dirs[x], function(absdir, rootdir, subdir, filename) {
         grunt.file.copy(absdir, path.join('build/' + dirs[x], subdir || '', filename || ''));
@@ -757,7 +780,7 @@ module.exports = function(grunt) {
 
   });
 
-  grunt.registerTask('setupDependencies', ['bower:install']);
+  grunt.registerTask('setupDependencies', ['bower:install', 'copyBowerSources']);
 
   // Run this task to update translation related files
   grunt.registerTask('updateTranslations', ['confirm', 'updateTranslationsSource', 'makeTranslations', 'makeAppData']);

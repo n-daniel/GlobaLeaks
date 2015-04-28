@@ -1,5 +1,5 @@
-importScripts('openpgp.worker.js');
-importScripts('scrypt.js');
+importScripts('crypto/scrypt.js');
+importScripts('crypto/openpgp.worker.min.js');
  
 var generateKeyPair = window.openpgp.generateKeyPair;
 
