@@ -1,4 +1,4 @@
-importScripts("crypto/scrypt.js");
+importScripts("scrypt.js");
 
 scrypt_hash = function(password, rounds, salt, scrypt) {
   var utf8_pwd = scrypt.encode_utf8(password);
