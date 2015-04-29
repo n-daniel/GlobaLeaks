@@ -1,250 +1,138 @@
 angular.module('e2e', []).
-  factory('pkdf', ['$q', function($q) {
-    return {
-      // rounds must be power of 2
-      scrypt_hash: function(password, rounds, scrypt) {
-        var utf8_pwd = scrypt.encode_utf8(password);
-        var salt = "This is the salt.";
+  factory('glcrypto', ['$q', function($q) {
+    var scrypt = function(password,
+                          salt,
+                          logN,
+                          encoding) {
+      var defer = $q.defer();
 
-        var bytearray_pwd = scrypt.crypto_scrypt(utf8_pwd, salt, rounds, 8, 1, 16);
-        return scrypt.to_hex(bytearray_pwd);
+      var worker = new Worker('/scripts/crypto/scrypt-async.worker.js');
+
+      worker.onmessage = function(e) {
+        defer.resolve(e.data);
+        worker.terminate();
+      };
+
+      worker.postMessage({
+        password: password,
+        salt: salt,
+        logN: logN,
+        r: 8,
+        dkLen: 256,
+        interruptStep: 0,
+        encoding: encoding
+      });
+
+      return defer.promise;
+    }
+
+    var e2e_key_bits = 2048;
+    var pgp_key_bits = 4096;
+
+    return {
+      scrypt: function(data, salt, logN) {
+        var defer = $q.defer();
+
+        scrypt(data, salt, logN, 'hex').then(function(stretched) {
+          defer.resolve({
+            value: data,
+            stretched: stretched
+          });
+        });
+
+        return defer.promise;
       },
       
-      gl_receipt: function() {
-        var receipt = "",
-          random = openpgp.crypto.random,
-          scrypt = scrypt_module_factory(33554432),
-          stretched;
+      derivate_password: function(user_password, salt) {
+        return this.scrypt(user_password, salt, 12);
+      },
 
+      derivate_passphrase: function(user_password, salt) {
+        return this.scrypt(user_password, salt, 13);
+      },
+
+      derivate_keycode: function(keycode, salt) {
+        return this.scrypt(keycode, salt, 12);
+      },
+      derivate_user_password: function (user_password, salt) {
+        var defer = $q.defer();
+
+        nested = this;
+
+        this.derivate_password(user_password, salt).then(function(password) {
+          this.scrypt = nested.scrypt;
+          this.derivate_passphrase = nested.derivate_passphrase;
+          this.derivate_passphrase(user_password, salt).then(function(passphrase) {
+            defer.resolve({password: password.stretched, passphrase: passphrase.stretched});
+          });
+        });
+
+        return defer.promise;
+      },
+      generate_e2e_key: function (user_password, salt) {
+        var defer = $q.defer();
+        var password;
+        var passphrase;
+
+        this.derivate_user_password(user_password, salt).then(function(data) {
+          var key_options = {
+            userId: 'randomuser@globaleaks.org',
+            passphrase: data.passphrase,
+            numBits: e2e_key_bits
+          }
+
+          var key = openpgp.generateKeyPair(key_options).then(function(keyPair) {
+            defer.resolve({
+              password: data.password,
+              passphrase: data.passphrase,
+              e2e_key_pub: keyPair.publicKeyArmored,
+              e2e_key_prv: keyPair.privateKeyArmored
+            });
+          });
+        });
+
+        return defer.promise;
+      },
+      generate_keycode: function() {
+        var keycode = '';
         for (var i=0; i<16; i++) {
-          receipt += random.getSecureRandom(0, 9);
+          keycode += openpgp.crypto.random.getSecureRandom(0, 9);
         }
-        var utf8_pwd = scrypt.encode_utf8(receipt);
-        var salt = "This is the salt.";
-        stretched = scrypt.crypto_scrypt(utf8_pwd, salt, 4096, 8, 1, 128);
-        return {
-          value: receipt,
-          stretched: stretched
-        }
+        return keycode;
       },
+      generate_key_from_keycode: function(keycode, salt) {
+        var defer = $q.defer();
 
-      gl_password: function(password) {
-        var scrypt = scrypt_module_factory(33554432);
-        var key = this.scrypt_hash(password, 4096, scrypt);
-        return key;
-      },
-
-      gl_passphrase: function(passphrase) {
-        var scrypt = scrypt_module_factory(33554432);
-        var key = this.scrypt_hash(passphrase, 8192, scrypt);
-        return key;
-      }
-    }
-  }]).
-  factory('whistleblower', ['$q', function($q) {
-    var wb_names = [
-      'Samuel Shaw',
-      'Edmund Dene Morel',
-      'Herbert Yardley',
-      'Smedley Butler',
-      'Jan Karski',
-      'John Paul Vann',
-      'Peter Buxtun',
-      'John White',
-      'Daniel Ellsberg',
-      'Frank Serpico',
-      'Perry Fellwock',
-      'Vladimir Bukovsky',
-      'W. Mark Felt',
-      'Stanley Adams',
-      'A. Ernest Fitzgerald',
-      'Henri Pezerat',
-      'Karen Silkwood',
-      'Gregory C. Minor',
-      'Richard B. Hubbard', 
-      'Dale G. Bridenbaugh',
-      'Frank Snepp',
-      'Clive Ponting',
-      'John Michael Gravitt',
-      'Duncan Edmonds',
-      'Ingvar Bratt',
-      'Cathy Massiter',
-      'Ronald J. Goldstein',
-      'Mordechai Vanunu',
-      'Peter Wright',
-      'Roland Gibeault',
-      'Douglas D. Keeth',
-      'William Schumer',
-      'Myron Mehlman',
-      'Arnold Gundersen',
-      'Joanna Gualtieri',
-      'Mark Whitacre',
-      'Andr\xe9 Cicolella',
-      'William Sanjour',
-      'George Galatis',
-      'Jeffrey Wigand',
-      'Allan Cutler',
-      'David Franklin',
-      'Michael Ruppert',
-      'Nancy Olivieri',
-      'Frederic Whitehurst',
-      'David Shayler',
-      'Christoph Meili',
-      'Alan Parkinson',
-      'Shiv Chopra',
-      'Paul van Buitenen',
-      'Marc Hodler',
-      'Linda Tripp',
-      '\xc1rp\xe1d Pusztai',
-      'Harry Markopolos',
-      'Youri Bandazhevsky',
-      'Marlene Garcia-Esperat',
-      'Janet Howard',
-      'Tanya Ward Jordan',
-      'Joyce E. Megginson',
-      'Karen Kwiatkowski',
-      'Stefan P. Kruszewski',
-      'Guy Pearse',
-      'Marsha Coleman-Adebayo',
-      'Joseph Nacchio',
-      'Pascal Diethelm',
-      'Jean-Charles Rielle',
-      'Jesselyn Radack',
-      'Kathryn Bolkovac',
-      'Cynthia Cooper',
-      'Sherron Watkins',
-      'Coleen Rowley',
-      'William Binney',
-      'J. Kirke Wiebe',
-      'Edward Loomis',
-      'Marta Andreasen',
-      'Glenn Walp',
-      'Steven L. Doran',
-      'Sibel Edmonds',
-      'Courtland Kelley',
-      'Diane Urquhart',
-      'Katharine Gun',
-      'Robert MacLean',
-      'Joseph Wilson',
-      'Richard Convertino',
-      'Satyendra Dubey',
-      'Joe Darby',
-      'Neil Patrick Carrick',
-      'Hans-Peter Martin',
-      'Craig Murray',
-      'Gerald W. Brown',
-      'David Graham',
-      'Samuel Provance',
-      'Peter Rost',
-      'Richard Levernier',
-      'Toni Hoffman',
-      'Russ Tice',
-      'Maria do Ros\xe0rio Veiga',
-      'Thomas Andrews Drake',
-      'Bunnatine "Bunny" H. Greenhouse',
-      'Brad Birkenfeld',
-      'Thomas Tamm',
-      'Shawn Carpenter',
-      'Rick S. Piltz',
-      'Shanmughan Manjunath',
-      'Paul Moore',
-      'Gary J. Aguirre',
-      'Walter DeNino',
-      'Marco Pautasso',
-      'Mark Klein',
-      'Cate Jenkins',
-      'Michael G. Winston',
-      'Richard M. Bowen III',
-      'Adam B. Resnick',
-      'Justin Hopson',
-      'Sergei Magnitsky',
-      'John Kiriakou',
-      'Anat Kamm',
-      'Rudolf Elmer',
-      'Robert J. McCarthy',
-      'Herv\xe9 Falciani',
-      'Wendell Potter',
-      'Cathy Harris',
-      'Ramin Pourandarjani',
-      'John Kopchinski',
-      'Jim Wetta',
-      'Joseph Faltaous',
-      'Steven Woodward',
-      'Jaydeen Vincente',
-      'Robert Rudolph',
-      'Hector Rosado',
-      'Robert Evan Dawitt',
-      'William Lofing',
-      'Bradly Lutz',
-      'Alexander Barankov',
-      'Linda Almonte',
-      'Chelsea Manning',
-      'Bradley Manning',
-      'Cheryl D. Eckard',
-      'Jim Wetta',
-      'Michael Woodford',
-      'M. N. Vijayakumar',
-      'Blake Percival',
-      'Everett Stern',
-      'Ted Siska',
-      'Vijay Pandhare',
-      'Joshua Wilson',
-      'Carmen Segarra',
-      'Silver Meikar',
-      'Antoine Deltour',
-      'David P. Weber',
-      'Edward Snowden',
-      'Laurence do Rego',
-      'John Tye',
-      'J. Kirk McGill'
-    ];
-    return {
-      names: wb_names,
-      generate_key_from_receipt: function(receipt, cb) {
         var workerAvailable = openpgp.initWorker('/scripts/crypto/ww_whistleblower_deterministic_key.js');
+
         openpgp.getWorker().generateKeyPair({
           numBits: 2048,
-          userId: "wb@antani.gov",
+          userId: "randomuser@globaleaks.org",
           unlocked: true,
           created: new Date(42),
-          salt: "salt",
-          receipt: receipt
+          salt: salt,
+          keycode: keycode
         }).then(function(keyPair){
           keyPair.key.primaryKey.created = new Date(42);
           keyPair.key.subKeys[0].subKey.created = new Date(42);
-          cb(keyPair);
+          defer.resolve(keyPair);
+        });
+
+        return defer.promise;
+      },
+      generate_pgp_key: function(user_email, passphrase) {
+        var key_options = {
+          userId: user_email,
+          passphrase: passphrase,
+          numBits: pgp_key_bits
+        }
+
+        var key = openpgp.generateKeyPair(key_options).then(function(keyPair) {
+          defer.resolve({
+            pgp_key_pub: keyPair.publicKeyArmored,
+            pgp_key_prv: keyPair.privateKeyArmored
+          });
         });
       }
     }
-  }]).
-  factory('pgp', function() {
-    return {
-      generate_key: function(cb) {
-        var email = 'a@b.org';
-        var password = 'abc123';
-
-        var k_user_id = email;
-        var k_passphrase = password;
-        var k_bits = 4096;
-
-        openpgp.config.show_comment = false;
-        openpgp.config.show_version = false;
-
-        var key = openpgp.generateKeyPair({
-          numBits: k_bits, userId: k_user_id,
-          //passphrase: k_passphrase
-        }).then(function(keyPair) {
-          var zip = new JSZip();
-          var folder_name = "globaleaks-keys"
-          var file_name = folder_name + '.zip'
-
-          var keys = zip.folder(folder_name);
-          keys.file("private.asc", keyPair.privateKeyArmored);
-          keys.file("public.asc", keyPair.publicKeyArmored);
-
-          var content = zip.generate({type:"blob"});
-          cb(keyPair, content);
-        });
-      }
-    }
-});
+}]);

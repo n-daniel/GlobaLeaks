@@ -1,5 +1,5 @@
-GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route', '$routeParams', '$location',  '$filter', '$translate', '$modal', 'Authentication', 'Node', 'Contexts', 'Receivers', 'WhistleblowerTip', 'GLCache',
-  function($q, $scope, $rootScope, $http, $route, $routeParams, $location, $filter, $translate, $modal, Authentication, Node, Contexts, Receivers, WhistleblowerTip, GLCache) {
+GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route', '$routeParams', '$location',  '$filter', '$translate', '$modal', 'Authentication', 'Node', 'Contexts', 'Receivers', 'WBReceipt', 'GLCache',
+  function($q, $scope, $rootScope, $http, $route, $routeParams, $location, $filter, $translate, $modal, Authentication, Node, Contexts, Receivers, WBReceipt, GLCache) {
     $scope.started = false;
     $scope.rtl = false;
     $scope.logo = 'static/globaleaks_logo.png';
@@ -222,7 +222,7 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
 
     $scope.view_tip = function(keycode) {
       keycode = keycode.replace(/\D/g,'');
-      WhistleblowerTip(keycode, function() {
+      WBReceipt(keycode, function() {
         $location.path('/status');
       });
     };

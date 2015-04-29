@@ -1,17 +1,14 @@
-importScripts('scrypt.js');
+importScripts('scrypt-async.min.js');
 importScripts('openpgp.worker.min.js');
  
 var generateKeyPair = window.openpgp.generateKeyPair;
 
 window.openpgp.generateKeyPair = function(options) {
 
-  function DeterministicSeed(receipt, salt) {
+  function DeterministicSeed(seed) {
     var self = this;
 
-    scrypt = scrypt_module_factory(33554432);
-    pwd = scrypt.encode_utf8(options.receipt);
-
-    self.seed = scrypt.crypto_scrypt(pwd, salt, 4096, 8, 1, 128 * 2);
+    self.seed = seed;
     self.offset = 0;
 
     function nextBytes(byteArray) {
@@ -23,7 +20,12 @@ window.openpgp.generateKeyPair = function(options) {
     this.nextBytes = nextBytes;
   }
 
-  options.prng = new DeterministicSeed(options.receipt, options.salt);
- 
-  return generateKeyPair(options);
+  return new Promise(function(resolve, reject) {
+    scrypt(options.keycode, options.salt, 12, 8, 256, 0, function(result) {
+      options.prng = new DeterministicSeed(result);
+      generateKeyPair(options).then(function(result) {
+        resolve(result);
+      });
+    });
+  });
 }

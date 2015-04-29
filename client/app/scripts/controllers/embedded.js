@@ -12,4 +12,3 @@ controller('EmbeddedSubmissionCtrl',
   $rootScope.embedded = true;
 
 }]);
-

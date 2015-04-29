@@ -1,58 +1,26 @@
 GLClient.controller('ReceiverSidebarCtrl', ['$scope', '$location', function($scope, $location){
+
   var current_menu = $location.path().split('/').slice(-1);
   $scope.active = {};
   $scope.active[current_menu] = "active";
 }]);
 
-GLClient.controller('ReceiverFirstLoginCtrl', ['$scope', '$rootScope', '$location', 'ReceiverPreferences', 'changePasswordWatcher', 'pkdf',
-  function($scope, $rootScope, $location, ReceiverPreferences, changePasswordWatcher, pkdf) {
+GLClient.controller('ReceiverFirstLoginCtrl', ['$scope', '$rootScope', '$location', 'ReceiverPreferences', 'changePasswordWatcher', 'glcrypto',
+  function($scope, $rootScope, $location, ReceiverPreferences, changePasswordWatcher, glcrypto) {
 
     $scope.preferences = ReceiverPreferences.get();
 
     changePasswordWatcher($scope, "preferences.old_password",
         "preferences.password", "preferences.check_password");
 
-    $scope.pass_save = function () {
-      $scope.preferences.pgp_key_public = '';
-
-      var new_password = pkdf.gl_password($scope.preferences.password);
-      var new_passphrase = pkdf.gl_passphrase($scope.preferences.password);
-
-      //$scope.preferences.old_password = old_pwd;
-      $scope.preferences.password = new_password;
-      $scope.preferences.check_password = new_password;
-
-      //TODO: add e-mail
-      var k_user_id = $scope.preferences.email;
-      var k_user_id = 'fake@email.com';
-      var k_passphrase = new_passphrase;
-      var k_bits = 2048;
-
-      openpgp.config.show_version = false;
-      openpgp.config.show_comment = false;
-
-      key = openpgp.generateKeyPair({   numBits: k_bits,
-                                        userId: k_user_id,
-                                        passphrase: k_passphrase }).then(function(keyPair) {
-
-            $scope.preferences.pgp_e2e_public = keyPair.publicKeyArmored;
-            $scope.preferences.pgp_e2e_private = keyPair.privateKeyArmored;
-
-            $scope.preferences.$update(function () {
-                if (!$rootScope.successes) {
-                    $rootScope.successes = [];
-                }
-                $rootScope.successes.push({message: 'Updated your password!'});
-                $location.path("/receiver/tips");
-            });
-      });
-
+    $scope.pass_save = function() {
+      ReceiverPreferences.generate_and_save_key($scope.preferences);
     };
 
 }]);
 
-GLClient.controller('ReceiverPreferencesCtrl', ['$scope', '$rootScope', 'ReceiverPreferences', 'changePasswordWatcher', 'CONSTANTS', 'pkdf',
-  function($scope, $rootScope, ReceiverPreferences, changePasswordWatcher, CONSTANTS, pkdf) {
+GLClient.controller('ReceiverPreferencesCtrl', ['$scope', '$rootScope', 'ReceiverPreferences', 'changePasswordWatcher', 'CONSTANTS', 'glcrypto',
+  function($scope, $rootScope, ReceiverPreferences, changePasswordWatcher, CONSTANTS, glcrypto) {
 
     $scope.tabs = [
       {
@@ -83,86 +51,62 @@ GLClient.controller('ReceiverPreferencesCtrl', ['$scope', '$rootScope', 'Receive
         "preferences.password", "preferences.check_password");
 
     $scope.pass_save = function () {
-
-      if ($scope.preferences.pgp_key_remove === undefined) {
-        $scope.preferences.pgp_key_remove = false;
-      }
-      if ($scope.preferences.pgp_key_public =n== undefined) {
-        $scope.preferences.pgp_key_public = '';
-      }
-
-      var new_password = pkdf.gl_password($scope.preferences.password);
-      var old_password = pkdf.gl_password($scope.preferences.old_password);
-      var new_passphrase = pkdf.gl_passphrase($scope.preferences.password);
-
       if (!$scope.preferences.pgp_e2e_public) {
+        ReceiverPreferences.generate_and_save_key($scope.preferences);
+      } else {
+        glcrypto.derivate_password($scope.preferences.old_password, "salt!").then(function(data1) {
+          var old_password = data1.stretched;
 
-            //TODO: receiver email if present
-            var k_user_id = $scope.preferences.email;
-            var k_user_id = 'fake@email.com';
-            var k_passphrase = new_passphrase;
-            var k_bits = 2048;
+          glcrypto.derivate_passphrase($scope.preferences.old_password, "salt!").then(function(data2) {
+            var old_passphrase = data2.stretched;
 
-            openpgp.config.show_version = false;
-            openpgp.config.show_comment = false;
+            glcrypto.derivate_password($scope.preferences.password, "salt!").then(function(data3) {
+              var new_password = data3.stretched;
 
-            key = openpgp.generateKeyPair({ numBits: k_bits,
-                                            userId: k_user_id,
-                                            passphrase: k_passphrase }).then(function(keyPair) {
+              glcrypto.derivate_passphrase($scope.preferences.password, "salt!").then(function(data4) {
+                var new_passphrase = data4.stretched;
 
-                $scope.preferences.pgp_e2e_public = keyPair.publicKeyArmored;
-                $scope.preferences.pgp_e2e_private = keyPair.privateKeyArmored;
+                try {
+                  privKey = openpgp.key.readArmored($scope.preferences.pgp_e2e_private).keys[0];
+                } catch (e) {
+                  throw new Error('Importing key failed. Parsing error!');
+                }
+
+                if (!privKey.decrypt(old_passphrase)) {
+                  throw new Error('Old passphrase incorrect!');
+                }
+
+                try {
+                  packets = privKey.getAllKeyPackets();
+                  for (var i = 0; i < packets.length; i++) {
+                    packets[i].encrypt(new_passphrase);
+                  }
+
+                  newKeyArmored = privKey.armor();
+                } catch (e) {
+                  throw new Error('Setting new passphrase failed!');
+                }
+
+                if (!privKey.decrypt(new_passphrase)) {
+                  throw new Error('Decrypting key with new passphrase failed!');
+                }
+
                 $scope.preferences.old_password = old_password;
                 $scope.preferences.password = new_password;
-                $scope.preferences.check_password = new_password;
+                $scope.preferences.pgp_e2e_private = newKeyArmored;
 
-                $scope.preferences.$update(function () {
-                    if (!$rootScope.successes) {
-                        $rootScope.successes = [];
-                    }
-                    $rootScope.successes.push({message: 'Updated your password!'});
-                });
-
-            });
-
-      } else {
-            var old_passphrase = pkdf.gl_passphrase($scope.preferences.old_password);
-
-            try {
-                privKey = openpgp.key.readArmored( $scope.preferences.pgp_e2e_private ).keys[0];
-            } catch (e) {
-                throw new Error('Importing key failed. Parsing error!');
-            }
-            if (!privKey.decrypt( old_passphrase )) {
-                throw new Error('Old passphrase incorrect!');
-            }
-            try {
-                packets = privKey.getAllKeyPackets();
-                for (var i = 0; i < packets.length; i++) {
-                    packets[i].encrypt( new_passphrase );
-                }
-                newKeyArmored = privKey.armor();
-            } catch (e) {
-                throw new Error('Setting new passphrase failed!');
-            }
-            if (!privKey.decrypt( new_passphrase )) {
-                throw new Error('Decrypting key with new passphrase failed!');
-            }
-            $scope.preferences.pgp_e2e_private = newKeyArmored;
-            $scope.preferences.old_password = old_password;
-            $scope.preferences.password = new_password;
-            $scope.preferences.check_password = new_password;
-
-            $scope.preferences.$update(function () {
-                if (!$rootScope.successes) {
+                $scope.preferences.$update(function (){
+                  if (!$rootScope.successes) {
                     $rootScope.successes = [];
-                }
-                $rootScope.successes.push({message: 'Updated your password!'});
+                  }
+                  $rootScope.successes.push({message: 'Updated your password!'});
+                });
+              })
             });
-
+          });
+        });
       }
-
-    };
+    }
 
     $scope.pref_save = function() {
 

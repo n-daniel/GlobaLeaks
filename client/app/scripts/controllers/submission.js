@@ -216,8 +216,8 @@ controller('SubmissionFieldCtrl', ['$scope', function ($scope) {
   };
 
 }]).
-controller('ReceiptController', ['$scope', '$location', 'Authentication', 'WhistleblowerTip',
-  function($scope, $location, Authentication, WhistleblowerTip) {
+controller('ReceiptController', ['$scope', '$location', 'Authentication',
+  function($scope, $location, Authentication) {
     var format_keycode = function(keycode) {
       var ret = keycode;
       if (keycode && keycode.length === 16) {
@@ -230,6 +230,6 @@ controller('ReceiptController', ['$scope', '$location', 'Authentication', 'Whist
       return ret;
     };
 
-    $scope.keycode = Authentication.receipt.value;
+    $scope.keycode = Authentication.whistleblower_keycode;
     $scope.formatted_keycode = format_keycode($scope.keycode);
 }]);

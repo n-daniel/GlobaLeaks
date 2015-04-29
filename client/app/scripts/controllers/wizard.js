@@ -65,8 +65,10 @@ GLClient.controller('WizardCtrl', ['$scope', '$rootScope', '$location', '$route'
                                        // at first login
         $scope.context = $scope.admin.new_context();
         passwordWatcher($scope, 'admin.node.password');
-        changePasswordWatcher($scope, "admin.node.old_password",
-          "admin.node.password", "admin.node.check_password");
+        changePasswordWatcher($scope,
+                              "admin.node.old_password",
+                              "admin.node.password",
+                              "admin.node.check_password");
       });
     }
 
