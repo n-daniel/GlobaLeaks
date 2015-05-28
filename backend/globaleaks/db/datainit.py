@@ -93,6 +93,8 @@ def init_db(store, result, node_dict, appdata_dict):
         'language': u"en",
         'timezone': 0,
         'password_change_needed': False,
+        'e2e_key_public': '',
+        'e2e_key_private': ''
     }
 
     admin = models.User(admin_dict)

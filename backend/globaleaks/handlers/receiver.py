@@ -35,8 +35,7 @@ def receiver_serialize_receiver(receiver, language):
         'pgp_key_expiration': datetime_to_ISO8601(receiver.pgp_key_expiration),
         'pgp_key_status': receiver.pgp_key_status,
         'pgp_key_public': receiver.pgp_key_public,
-        'pgp_e2e_public': receiver.pgp_e2e_public,
-        'pgp_e2e_private': receiver.pgp_e2e_private,
+        'e2e_key_public': receiver.user.e2e_key_public,
         'tip_notification': receiver.tip_notification,
         'ping_notification': receiver.ping_notification,
         'mail_address': receiver.user.mail_address,
@@ -121,10 +120,8 @@ def update_receiver_settings(store, receiver_id, request, language):
 
     pgp_options_parse(receiver, request)
 
-    #TODO: validate armored pgp keys
-
-    receiver.pgp_e2e_public = request['pgp_e2e_public']
-    receiver.pgp_e2e_private = request['pgp_e2e_private']
+    receiver.user.e2e_key_public = request['e2e_key_public']
+    receiver.user.e2e_key_private = request['e2e_key_private']
 
     return receiver_serialize_receiver(receiver, language)
 

@@ -240,7 +240,7 @@ def anon_serialize_receiver(receiver, language):
         'configuration': receiver.configuration,
         'presentation_order': receiver.presentation_order,
         'pgp_key_status': receiver.pgp_key_status,
-        "pgp_e2e_public": receiver.pgp_e2e_public,
+        "e2e_key_public": receiver.user.e2e_key_public,
         'contexts': [c.id for c in receiver.contexts]
     }
 

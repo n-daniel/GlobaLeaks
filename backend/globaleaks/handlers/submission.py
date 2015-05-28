@@ -55,9 +55,10 @@ def db_create_receivertip(store, receiver, internaltip):
     return receivertip.id
 
 
-def db_create_whistleblower_tip(store, wb_signature, internaltip_id):
+def db_create_whistleblower_tip(store, wb_signature, internaltip):
     wbtip = WhistleblowerTip()
     wbtip.access_counter = 0
+    wbtip.wb_signature = wb_signature
     wbtip.internaltip_id = internaltip.id
 
     store.add(wbtip)
@@ -71,8 +72,6 @@ def db_create_whistleblower_tip(store, wb_signature, internaltip_id):
 
     if len(created_rtips):
         log.debug("The finalized submissions had created %d ReceiverTip(s)" % len(created_rtips))
-
-    return receipt
 
 
 def hybrid_get_receipt_hash(store):
@@ -240,11 +239,9 @@ def db_create_submission(store, token, request, language):
         log.err("Submission create: receivers import fail: %s" % excep)
         raise excep
 
-    receipt = db_create_whistleblower_tip(store, submission)
+    db_create_whistleblower_tip(store, request['wb_signature'], submission)
 
     submission_dict = wb_serialize_internaltip(submission)
-
-    submission_dict.update({'receipt': receipt})
 
     return submission_dict
 
@@ -288,6 +285,7 @@ class SubmissionCreate(BaseHandler):
         token_answer.update({'id': token_answer['token_id']})
         token_answer.update({'context_id': request['context_id']})
         token_answer.update({'human_captcha_answer': 0})
+        token_answer.update({'receivers': []})
 
         self.set_status(201)  # Created
         self.finish(token_answer)

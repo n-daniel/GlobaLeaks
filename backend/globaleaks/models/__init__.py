@@ -170,6 +170,9 @@ class User(Model):
     password_change_needed = Bool(default=True)
     password_change_date = DateTime(default_factory=datetime_null)
 
+    e2e_key_public  = Unicode()
+    e2e_key_private = Unicode()
+
     # roles: 'admin', u'receiver'
     # states: 'disabled', 'enabled'
 
@@ -595,9 +598,6 @@ class Receiver(Model):
     pgp_key_expiration = DateTime()
     pgp_key_status = Unicode()
     # pgp_statuses: 'disabled', 'enabled'
-
-    pgp_e2e_public  = Unicode()
-    pgp_e2e_private = Unicode()
 
     # Can be changed only by admin (but also differ from username!)
     mail_address = Unicode()

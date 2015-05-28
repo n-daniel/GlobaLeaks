@@ -230,6 +230,6 @@ controller('ReceiptController', ['$scope', '$location', 'Authentication',
       return ret;
     };
 
-    $scope.keycode = Authentication.whistleblower_keycode;
+    $scope.keycode = Authentication.keycode;
     $scope.formatted_keycode = format_keycode($scope.keycode);
 }]);

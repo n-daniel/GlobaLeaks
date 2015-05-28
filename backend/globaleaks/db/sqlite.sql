@@ -15,6 +15,8 @@ CREATE TABLE user (
     timezone INTEGER DEFAULT 0,
     password_change_needed INTEGER NOT NULL,
     password_change_date VARCHAR NOT NULL,
+    e2e_key_public VARCHAR,
+    e2e_key_private VARCHAR,
     PRIMARY KEY (id),
     UNIQUE (username)
 );
@@ -232,8 +234,6 @@ CREATE TABLE receiver (
     pgp_key_expiration INTEGER,
     pgp_key_public VARCHAR,
     pgp_key_private VARCHAR,
-    pgp_e2e_public VARCHAR,
-    pgp_e2e_private VARCHAR,
     presentation_order INTEGER,
     PRIMARY KEY (id),
     UNIQUE(name),

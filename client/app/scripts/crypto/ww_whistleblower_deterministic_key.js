@@ -21,7 +21,7 @@ window.openpgp.generateKeyPair = function(options) {
   }
 
   return new Promise(function(resolve, reject) {
-    scrypt(options.keycode, options.salt, 12, 8, 256, 0, function(result) {
+    scrypt(options.keycode, options.salt, 12, 8, 256, function(result) {
       options.prng = new DeterministicSeed(result);
       generateKeyPair(options).then(function(result) {
         resolve(result);

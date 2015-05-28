@@ -13,7 +13,6 @@ onmessage = function(e) {
            options.logN,
            options.r,
            options.dkLen,
-           options.interruptStep,
            callback,
            options.encoding);
   });

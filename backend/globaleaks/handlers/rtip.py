@@ -380,7 +380,7 @@ def get_receiver_list_receiver(store, user_id, tip_id, language):
             "name": unicode(rtip.receiver.name),
             "receiver_id": unicode(rtip.receiver.id),
             "access_counter": rtip.access_counter,
-            "pgp_e2e_public": rtip.receiver.pgp_e2e_public
+            "e2e_key_public": rtip.receiver.user.e2e_key_public
         }
 
         mo = Rosetta(rtip.receiver.localized_strings)

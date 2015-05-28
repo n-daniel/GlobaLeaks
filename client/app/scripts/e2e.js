@@ -19,7 +19,6 @@ angular.module('e2e', []).
         logN: logN,
         r: 8,
         dkLen: 256,
-        interruptStep: 0,
         encoding: encoding
       });
 
