@@ -230,13 +230,14 @@ def db_create_submission(store, token, request, language):
         steps = db_get_context_steps(store, context.id, language)
         submission.wb_steps = wb_steps
 
-        preview_data = []
-        for s in wb_steps:
-            for f in s['children']:
-                if f['preview']:
-                    preview_data.append(f)
-
-        submission.preview = preview_data
+        # Disable preview that eventually shuould be implemented
+        # preview_data = []
+        # for s in wb_steps:
+        #    for f in s['children']:
+        #        if f['preview']:
+        #            preview_data.append(f)
+        #
+        # submission.preview = preview_data
 
     except Exception as excep:
         log.err("Submission create: fields validation fail: %s" % excep)
