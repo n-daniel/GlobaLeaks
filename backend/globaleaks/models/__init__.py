@@ -189,7 +189,8 @@ class Context(Model):
     show_receivers = Bool(default=True)
     maximum_selectable_receivers = Int(default=0)
     select_all_receivers = Bool(default=False)
-    enable_private_messages = Bool(default=True)
+    enable_comments = Bool(default=True)
+    enable_private_messages = Bool(default=False)
 
     tip_timetolive = Int()
     last_update = DateTime(default_factory=datetime_null)
@@ -240,6 +241,7 @@ class InternalTip(Model):
     # receivers = ReferenceSet(InternalTip.id, Receiver.id)
 
     wb_steps = JSON()
+    preview = JSON()
     expiration_date = DateTime()
     last_activity = DateTime(default_factory=datetime_null)
     new = Int(default=True)
@@ -504,12 +506,12 @@ class Notification(Model):
     comment_mail_title = JSON(validator=longlocal_v)
     message_mail_template = JSON(validator=longlocal_v)
     message_mail_title = JSON(validator=longlocal_v)
-    tip_expiration_template = JSON(validator=longlocal_v)
+    tip_expiration_mail_template = JSON(validator=longlocal_v)
     tip_expiration_mail_title = JSON(validator=longlocal_v)
     pgp_alert_mail_title = JSON(validator=longlocal_v)
     pgp_alert_mail_template = JSON(validator=longlocal_v)
-    receiver_threshold_reached_mail_template = JSON(validator=longlocal_v)
-    receiver_threshold_reached_mail_title = JSON(validator=longlocal_v)
+    receiver_notification_limit_reached_mail_template = JSON(validator=longlocal_v)
+    receiver_notification_limit_reached_mail_title = JSON(validator=longlocal_v)
     zip_description = JSON(validator=longlocal_v)
 
     # Experimental Receiver template
@@ -553,14 +555,14 @@ class Notification(Model):
         'comment_mail_title',
         'message_mail_template',
         'message_mail_title',
-        'tip_expiration_template',
+        'tip_expiration_mail_template',
         'tip_expiration_mail_title',
         'notification_digest_mail_title',
         'zip_description',
         'ping_mail_template',
         'ping_mail_title',
-        'receiver_threshold_reached_mail_template',
-        'receiver_threshold_reached_mail_title'
+        'receiver_notification_limit_reached_mail_template',
+        'receiver_notification_limit_reached_mail_title'
     ]
 
     int_keys = [
@@ -653,22 +655,22 @@ class Field(Model):
     description = JSON(validator=longlocal_v)
     hint = JSON(validator=longlocal_v)
 
-    multi_entry = Bool()
-    required = Bool()
-    preview = Bool()
+    multi_entry = Bool(default=False)
+    required = Bool(default=False)
+    preview = Bool(default=False)
 
     # This is set if the field should be duplicated for collecting statistics
     # when encryption is enabled.
-    stats_enabled = Bool()
+    stats_enabled = Bool(default=False)
 
     # This indicates that this field should be used as a template for composing
     # new steps.
-    is_template = Bool()
+    is_template = Bool(default=False)
 
-    x = Int()
-    y = Int()
+    x = Int(default=0)
+    y = Int(default=0)
 
-    type = Unicode()
+    type = Unicode(default=u'inputbox')
     # Supported field types:
     # * inputbox
     # * textarea
@@ -712,11 +714,11 @@ class Field(Model):
 
 class FieldOption(Model):
     field_id = Unicode()
-    number = Int()
+    presentation_order = Int(default=0)
     attrs = JSON()
 
     unicode_keys = ['field_id']
-    int_keys = ['number']
+    int_keys = ['presentation_order']
     json_keys = ['attrs']
 
     def __init__(self, attrs=None, localized_keys=None):
@@ -746,7 +748,7 @@ class FieldOption(Model):
     def copy(self, store):
         obj_copy = self.__class__()
         obj_copy.field_id = self.field_id
-        obj_copy.number = self.number
+        obj_copy.presentation_order = self.presentation_order
         obj_copy.attrs = copy.deepcopy(self.attrs)
         return obj_copy
 
@@ -756,10 +758,10 @@ class Step(Model):
     label = JSON()
     description = JSON()
     hint = JSON()
-    number = Int()
+    presentation_order = Int(default=0)
 
     unicode_keys = ['context_id']
-    int_keys = ['number']
+    int_keys = ['presentation_order']
     localized_strings = ['label', 'description', 'hint']
 
 
@@ -833,57 +835,97 @@ class ReceiverInternalTip(BaseModel):
     internaltip_id = Unicode()
 
 
-Field.options = ReferenceSet(Field.id,
-                             FieldOption.field_id)
+Field.options = ReferenceSet(
+    Field.id,
+    FieldOption.field_id
+)
+
+Field.children = ReferenceSet(
+    Field.id,
+    FieldField.parent_id,
+    FieldField.child_id,
+    Field.id
+)
 
 FieldOption.field = Reference(FieldOption.field_id, Field.id)
 
-Context.steps = ReferenceSet(Context.id,
-                             Step.context_id)
+Step.children = ReferenceSet(
+    Step.id,
+    StepField.step_id,
+    StepField.field_id,
+    Field.id
+)
+
+Context.steps = ReferenceSet(Context.id, Step.context_id)
 
 Step.context = Reference(Step.context_id, Context.id)
 
 # _*_# References tracking below #_*_#
 Receiver.user = Reference(Receiver.id, User.id)
 
-Receiver.internaltips = ReferenceSet(Receiver.id,
-                                     ReceiverInternalTip.receiver_id,
-                                     ReceiverInternalTip.internaltip_id,
-                                     InternalTip.id)
+Receiver.internaltips = ReferenceSet(
+    Receiver.id,
+    ReceiverInternalTip.receiver_id,
+    ReceiverInternalTip.internaltip_id,
+    InternalTip.id
+)
 
-InternalTip.receivers = ReferenceSet(InternalTip.id,
-                                     ReceiverInternalTip.internaltip_id,
-                                     ReceiverInternalTip.receiver_id,
-                                     Receiver.id)
+InternalTip.receivers = ReferenceSet(
+    InternalTip.id,
+    ReceiverInternalTip.internaltip_id,
+    ReceiverInternalTip.receiver_id,
+    Receiver.id
+)
 
-InternalTip.context = Reference(InternalTip.context_id,
-                                Context.id)
+InternalTip.context = Reference(
+    InternalTip.context_id,
+    Context.id
+)
 
-InternalTip.comments = ReferenceSet(InternalTip.id,
-                                    Comment.internaltip_id)
+InternalTip.comments = ReferenceSet(
+    InternalTip.id,
+    Comment.internaltip_id
+)
 
-InternalTip.receivertips = ReferenceSet(InternalTip.id,
-                                        ReceiverTip.internaltip_id)
+InternalTip.receivertips = ReferenceSet(
+    InternalTip.id,
+    ReceiverTip.internaltip_id
+)
 
-InternalTip.internalfiles = ReferenceSet(InternalTip.id,
-                                         InternalFile.internaltip_id)
+InternalTip.internalfiles = ReferenceSet(
+    InternalTip.id,
+    InternalFile.internaltip_id
+)
 
-ReceiverFile.internalfile = Reference(ReceiverFile.internalfile_id,
-                                      InternalFile.id)
+ReceiverFile.internalfile = Reference(
+    ReceiverFile.internalfile_id,
+    InternalFile.id
+)
 
-ReceiverFile.receiver = Reference(ReceiverFile.receiver_id, Receiver.id)
+ReceiverFile.receiver = Reference(
+    ReceiverFile.receiver_id,
+    Receiver.id
+)
 
-ReceiverFile.internaltip = Reference(ReceiverFile.internaltip_id,
-                                     InternalTip.id)
+ReceiverFile.internaltip = Reference(
+    ReceiverFile.internaltip_id,
+    InternalTip.id
+)
 
-ReceiverFile.receivertip = Reference(ReceiverFile.receivertip_id,
-                                     ReceiverTip.id)
+ReceiverFile.receivertip = Reference(
+    ReceiverFile.receivertip_id,
+    ReceiverTip.id
+)
 
-WhistleblowerTip.internaltip = Reference(WhistleblowerTip.internaltip_id,
-                                         InternalTip.id)
+WhistleblowerTip.internaltip = Reference(
+    WhistleblowerTip.internaltip_id,
+    InternalTip.id
+)
 
-InternalFile.internaltip = Reference(InternalFile.internaltip_id,
-                                     InternalTip.id)
+InternalFile.internaltip = Reference(
+    InternalFile.internaltip_id,
+    InternalTip.id
+)
 
 ReceiverTip.internaltip = Reference(ReceiverTip.internaltip_id, InternalTip.id)
 
@@ -898,29 +940,19 @@ Message.receivertip = Reference(Message.receivertip_id, ReceiverTip.id)
 EventLogs.receiver = Reference(EventLogs.receiver_id, Receiver.id)
 EventLogs.rtip = Reference(EventLogs.receivertip_id, ReceiverTip.id)
 
-Field.children = ReferenceSet(
-    Field.id,
-    FieldField.parent_id,
-    FieldField.child_id,
-    Field.id)
-
-Step.children = ReferenceSet(
-    Step.id,
-    StepField.step_id,
-    StepField.field_id,
-    Field.id)
-
 Context.receivers = ReferenceSet(
     Context.id,
     ReceiverContext.context_id,
     ReceiverContext.receiver_id,
-    Receiver.id)
+    Receiver.id
+)
 
 Receiver.contexts = ReferenceSet(
     Receiver.id,
     ReceiverContext.receiver_id,
     ReceiverContext.context_id,
-    Context.id)
+    Context.id
+)
 
 models_list = [Node, User, Context, Receiver, ReceiverContext,
                Field, FieldOption, FieldField, Step, StepField,

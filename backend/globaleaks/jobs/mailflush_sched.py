@@ -90,7 +90,7 @@ class ReceiverDeniedEmail(TempObj):
     def generate_anomaly_email(self, plausible_event):
 
         anomalevent = OD()
-        anomalevent.type = u'receiver_threshold_reached'
+        anomalevent.type = u'receiver_notification_limit_reached'
         anomalevent.notification_settings = plausible_event.notification_settings
         anomalevent.node_info = plausible_event.node_info
         anomalevent.context_info = None
@@ -306,7 +306,7 @@ def filter_notification_event(notifque):
 
         return_filtered_list.append(ne)
 
-    log.debug("List of event %d after the filtering process is %d long" %
+    log.debug("Notification filtering completed passing from #%d to #%d events" %
               (len(notifque), len(return_filtered_list)))
 
     # return the new list of event and the list of Storm.id

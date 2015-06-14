@@ -17,20 +17,20 @@ from globaleaks.db.migrations.update_16_17 import Replacer1617, Node_v_16, Recei
 from globaleaks.db.migrations.update_17_18 import Replacer1718, Node_v_17
 from globaleaks.db.migrations.update_18_19 import Replacer1819, Node_v_18
 from globaleaks.db.migrations.update_19_20 import Replacer1920, Node_v_19, Notification_v_19, Comment_v_19, Message_v_19, \
-    InternalTip_v_19, ReceiverTip_v_19, InternalFile_v_19, ReceiverFile_v_19, Receiver_v_19, \
-    Context_v_19
-from globaleaks.db.migrations.update_20_21 import Replacer2021, Node_v_20, Notification_v_20, Receiver_v_20, User_v_20
+    InternalTip_v_19, ReceiverTip_v_19, InternalFile_v_19, ReceiverFile_v_19, Receiver_v_19, Context_v_19
+from globaleaks.db.migrations.update_20_21 import Replacer2021, Node_v_20, Notification_v_20, Receiver_v_20, User_v_20, \
+    Context_v_20, Step_v_20, Field_v_20, FieldOption_v_20, InternalTip_v_20
 
 
 table_history = {
     'Node': [Node_v_9, None, Node_v_11, None, Node_v_12, Node_v_13, Node_v_14, Node_v_16, None, Node_v_17, Node_v_18, Node_v_19, Node_v_20, models.Node],
     'User': [User_v_9, None, User_v_14, None, None, None, None, User_v_20, None, None, None, None, None, models.User],
-    'Context': [Context_v_8, Context_v_11, None, None, Context_v_12, Context_v_13, Context_v_14, Context_v_19, None, None, None, None, models.Context, None],
+    'Context': [Context_v_8, Context_v_11, None, None, Context_v_12, Context_v_13, Context_v_14, Context_v_19, None, None, None, None, Context_v_20, models.Context],
     'Receiver': [Receiver_v_8, Receiver_v_9, Receiver_v_14, None, None, None, None, Receiver_v_15, Receiver_v_16, Receiver_v_19, None, None, Receiver_v_20, models.Receiver],
     'ReceiverFile': [ReceiverFile_v_19, None, None, None, None, None, None, None, None, None, None, None, models.ReceiverFile, None],
     'Notification': [Notification_v_8, Notification_v_14, None, None, None, None, None, Notification_v_15, Notification_v_16, Notification_v_19, None, None, Notification_v_20, models.Notification],
     'Comment': [Comment_v_14, None, None, None, None, None, None, Comment_v_19, None, None, None, None, models.Comment, None],
-    'InternalTip': [InternalTip_v_10, None, None, InternalTip_v_14, None, None, None, InternalTip_v_19, None, None, None, None, models.InternalTip, None],
+    'InternalTip': [InternalTip_v_10, None, None, InternalTip_v_14, None, None, None, InternalTip_v_19, None, None, None, None, InternalTip_v_20, models.InternalTip],
     'InternalFile': [InternalFile_v_10, None, None, InternalFile_v_19, None, None, None, None, None, None, None, None, models.InternalFile, None],
     'WhistleblowerTip': [models.WhistleblowerTip, None, None, None, None, None, None, None, None, None, None, None, None, None],
     'ReceiverTip': [ReceiverTip_v_19, None, None, None, None, None, None, None, None, None, None, None, models.ReceiverTip, None],
@@ -39,10 +39,10 @@ table_history = {
     'Message': [Message_v_19, None, None, None, None, None, None, None, None, None, None, None, models.Message, None],
     'Stats': [Stats_v_14, None, None, None, None, None, None, Stats_v_16, None, models.Stats, None, None, None, None],
     'ApplicationData': [models.ApplicationData, None, None, None, None, None, None, None, None, None, None, None, None, None],
-    'Field': [models.Field, None, None, None, None, None, None, None, None, None, None, None, None, None],
-    'FieldOption': [models.FieldOption, None, None, None, None, None, None, None, None, None, None, None, None, None],
+    'Field': [Field_v_20, None, None, None, None, None, None, None, None, None, None, None, None, models.Field],
+    'FieldOption': [FieldOption_v_20, None, None, None, None, None, None, None, None, None, None, None, None, models.FieldOption],
     'FieldField': [models.FieldField, None, None, None, None, None, None, None, None, None, None, None, None, None],
-    'Step': [models.Step, None, None, None, None, None, None, None, None, None, None, None, None, None],
+    'Step': [Step_v_20, None, None, None, None, None, None, None, None, None, None, None, None, models.Step],
     'StepField': [models.StepField, None, None, None, None, None, None, None, None, None, None, None, None, None],
     'Anomalies': [models.Anomalies, None, None, None, None, None, None, None, None, None, None, None, None, None],
     'EventLogs': [models.EventLogs, None, None, None, None, None, None, None, None, None, None, None, None, None]

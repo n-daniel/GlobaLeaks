@@ -137,10 +137,8 @@ def db_create_step(store, context, steps, language):
     :param steps: a dictionary containing the new steps.
     :param language: the language of the specified steps.
     """
-    n = 1
     for step in steps:
         step['context_id'] = context.id
-        step['number'] = n
 
         fill_localized_keys(step, models.Step.localized_strings, language)
 
@@ -156,8 +154,6 @@ def db_create_step(store, context, steps, language):
             if a_s != s.id:
                 disassociate_field(store, field.id)
                 s.children.add(field)
-
-        n += 1
 
 def db_update_steps(store, context, steps, language):
     """
@@ -175,10 +171,8 @@ def db_update_steps(store, context, steps, language):
         indexed_old_steps[o.id] = o
 
     new_steps = []
-    n = 1
     for step in steps:
         step['context_id'] = context.id
-        step['number'] = n
 
         fill_localized_keys(step, models.Step.localized_strings, language)
 
@@ -190,11 +184,11 @@ def db_update_steps(store, context, steps, language):
 
             s.update(step)
 
-            new_steps.append(indexed_old_steps[step['id']])
             del indexed_old_steps[step['id']]
         else:
             s = models.Step(step)
-            new_steps.append(s)
+
+        new_steps.append(s)
 
         i = 1
         for children in step['children']:
@@ -216,8 +210,6 @@ def db_update_steps(store, context, steps, language):
             else: # the else condition means a_s == s.id; already associated!
                 pass
 
-        n += 1
-
     for o_id in indexed_old_steps:
         store.remove(indexed_old_steps[o_id])
 
@@ -234,7 +226,7 @@ def admin_serialize_context(store, context, language):
     :return: a dictionary representing the serialization of the context.
     """
     steps = [anon_serialize_step(store, s, language)
-                for s in context.steps.order_by(models.Step.number)]
+                for s in context.steps.order_by(models.Step.presentation_order)]
 
     ret_dict = {
         'id': context.id,
@@ -249,6 +241,7 @@ def admin_serialize_context(store, context, language):
         'maximum_selectable_receivers': context.maximum_selectable_receivers,
         'show_small_cards': context.show_small_cards,
         'show_receivers': context.show_receivers,
+        'enable_comments': context.enable_comments,
         'enable_private_messages': context.enable_private_messages,
         'presentation_order': context.presentation_order,
         'show_receivers_in_alphabetical_order': context.show_receivers_in_alphabetical_order,
@@ -433,13 +426,13 @@ def db_setup_default_steps(store, context):
             for o_child in o_children:
                 o = models.db_forge_obj(store, models.FieldOption, o_child)
                 o.field_id = f.id
-                o.number = n_o
+                o.presentation_order = n_o
                 f.options.add(o)
                 n_o += 1
             f.step_id = s.id
             s.children.add(f)
         s.context_id = context.id
-        s.number = n_s
+        s.presentation_order = n_s
         context.steps.add(s)
         n_s += 1
 

@@ -18,7 +18,7 @@ from globaleaks.rest.apicache import GLApiCache
 from globaleaks.security import change_password
 from globaleaks.settings import transact, transact_ro, GLSetting
 from globaleaks.utils.structures import Rosetta, get_localized_values
-from globaleaks.utils.utility import log, acquire_bool, datetime_to_ISO8601, datetime_now
+from globaleaks.utils.utility import log, datetime_to_ISO8601, datetime_now
 
 # https://www.youtube.com/watch?v=BMxaLEGCVdg
 def receiver_serialize_receiver(receiver, language):
@@ -116,7 +116,8 @@ def update_receiver_settings(store, receiver_id, request, language):
             receiver.ping_mail_address, ping_mail_address))
         receiver.ping_mail_address = ping_mail_address
 
-    receiver.tip_notification = acquire_bool(request['tip_notification'])
+    receiver.tip_notification = request['tip_notification']
+    receiver.ping_notification = request['ping_notification']
 
     pgp_options_parse(receiver, request)
 
@@ -187,7 +188,6 @@ def get_receivertip_list(store, receiver_id, language):
     rtip_summary_list = []
 
     for rtip in rtiplist:
-
         can_postpone_expiration = (node.can_postpone_expiration or
                                    rtip.internaltip.context.can_postpone_expiration or
                                    rtip.receiver.can_postpone_expiration)
@@ -202,7 +202,6 @@ def get_receivertip_list(store, receiver_id, language):
 
         message_counter = store.find(Message,
                                      Message.receivertip_id == rtip.id).count()
-
         single_tip_sum = dict({
             'id': rtip.id,
             'creation_date': datetime_to_ISO8601(rtip.creation_date),
@@ -214,24 +213,13 @@ def get_receivertip_list(store, receiver_id, language):
             'message_counter': message_counter,
             'can_postpone_expiration': can_postpone_expiration,
             'can_delete_submission': can_delete_submission,
+            'preview': rtip.internaltip.preview
         })
 
         mo = Rosetta(rtip.internaltip.context.localized_strings)
         mo.acquire_storm_object(rtip.internaltip.context)
         single_tip_sum["context_name"] = mo.dump_localized_attr('name', language)
 
-        preview_data = []
-
-        try:
-            for s in rtip.internaltip.wb_steps:
-                for f in s['children']:
-                    if f['preview']:
-                        preview_data.append(f)
-        except:
-            # TODO E2E: handle the case of encrypted payload
-            pass
-
-        single_tip_sum.update({'preview': preview_data})
         rtip_summary_list.append(single_tip_sum)
 
     return rtip_summary_list
@@ -253,7 +241,7 @@ class TipsCollection(BaseHandler):
         Errors: InvalidAuthentication
         """
         answer = yield get_receivertip_list(self.current_user.user_id,
-                                             self.request.language)
+                                            self.request.language)
 
         self.set_status(200)
         self.finish(answer)

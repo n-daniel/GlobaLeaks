@@ -26,9 +26,6 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
       var success = {};
       success.message = "Updated " + model;
       model.$update(function(result) {
-        if (!$scope.successes) {
-          $scope.successes = [];
-        }
         $scope.successes.push(success);
       }).then(
         function() { if (cb !== undefined) cb(); },
@@ -79,13 +76,13 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
     };
 
     $scope.set_title = function () {
-      if ($scope.node) {
+      if ($rootScope.node) {
         if ($location.path() === '/') {
-          $scope.ht = $scope.node.header_title_homepage;
+          $scope.ht = $rootScope.node.header_title_homepage;
         } else if ($location.path() === '/submission') {
-          $scope.ht = $scope.node.header_title_submissionpage;
+          $scope.ht = $rootScope.node.header_title_submissionpage;
         } else if ($location.path() === '/receipt') {
-          $scope.ht = $scope.node.header_title_receiptpage;
+          $scope.ht = $rootScope.node.header_title_receiptpage;
         } else {
           $scope.ht = $filter('translate')($scope.header_title);
         }
@@ -93,19 +90,19 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
     };
 
     $scope.route_check = function () {
-      if ($scope.node) {
+      if ($rootScope.node) {
 
-        if ($scope.node.wizard_done === false) {
+        if ($rootScope.node.wizard_done === false) {
           $location.path('/wizard');
         }
 
-        if (($location.path() === '/') && ($scope.node.landing_page === 'submissionpage')) {
+        if (($location.path() === '/') && ($rootScope.node.landing_page === 'submissionpage')) {
           $location.path('/submission');
         }
 
         if ($location.path() === '/submission' &&
             $scope.anonymous === false &&
-            $scope.node.tor2web_submission === false) {
+            $rootScope.node.tor2web_submission === false) {
           $location.path("/");
         }
 
@@ -131,7 +128,7 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
       $scope.build_stylesheet = "styles.css?" + $scope.randomFluff();
 
       Node.get(function(node, getResponseHeaders) {
-        $scope.node = node;
+        $rootScope.node = node;
         // Tor detection and enforcing of usage of HS if users are using Tor
         if (window.location.hostname.match(/^[a-z0-9]{16}\.onion$/)) {
           // A better check on this situation would be
@@ -142,11 +139,11 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
              var headers = getResponseHeaders();
              if (headers['x-check-tor'] !== undefined && headers['x-check-tor'] === 'true') {
                $rootScope.anonymous = true;
-               if ($scope.node.hidden_service && !iframeCheck()) {
+               if ($rootScope.node.hidden_service && !iframeCheck()) {
                  // the check on the iframe is in order to avoid redirects
                  // when the application is included inside iframes in order to not
                  // mix HTTPS resources with HTTP resources.
-                 window.location.href = $scope.node.hidden_service + '/#' + $location.url();
+                 window.location.href = $rootScope.node.hidden_service + '/#' + $location.url();
                }
              } else {
                $rootScope.anonymous = false;
@@ -178,7 +175,7 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
         $scope.set_title();
 
         var set_language = function(language) {
-          if (language == undefined || $scope.node.languages_enabled.indexOf(language) == -1) {
+          if (language == undefined || $rootScope.node.languages_enabled.indexOf(language) == -1) {
             language = node.default_language;
             $rootScope.default_language = node.default_language;
           }
@@ -198,6 +195,7 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
 
         set_language($rootScope.language);
 
+
         var q1 = Contexts.query(function (contexts) {
           $rootScope.contexts = contexts;
         });
@@ -208,12 +206,6 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
 
         $q.all([q1.$promise, q2.$promise]).then(function() {
           $scope.started = true;
-        });
-
-        $rootScope.$watch('language', function (newVal, oldVal) {
-          if (newVal && newVal !== oldVal) {
-            set_language(newVal);
-          }
         });
 
       });
@@ -228,6 +220,9 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
     };
 
     $scope.reload = function() {
+      $scope.started = false;
+      $rootScope.successes = [];
+      $rootScope.errors = [];
       GLCache.removeAll();
       init();
       $route.reload();
@@ -255,6 +250,12 @@ GLClient.controller('MainCtrl', ['$q', '$scope', '$rootScope', '$http', '$route'
         $scope.homepage = Authentication.homepage;
       } else {
         $scope.reset_session();
+      }
+    });
+
+    $rootScope.$watch('language', function (newVal, oldVal) {
+      if (newVal && newVal !== oldVal) {
+        $rootScope.$broadcast("REFRESH");
       }
     });
 
@@ -325,4 +326,16 @@ GLClient.controller('IntroCtrl', ['$scope', '$rootScope', '$modalInstance', func
     }
   });
 
+}]);
+
+GLClient.controller('ConfirmableDialogCtrl', ['$scope', '$modalInstance', 'object', function($scope, $modalInstance, object) {
+  $scope.object = object;
+
+  $scope.ok = function () {
+    $modalInstance.close($scope.object);
+  };
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
 }]);

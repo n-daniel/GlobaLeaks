@@ -27,24 +27,27 @@
 <div id="StepsEditBox" data-ng-if="context.steps.length" class="col-md-12">
   <h4><span data-translate>Configured steps:</span></h4>
   <div>
-    <div data-ng-model="context.steps">
-      <div data-ng-repeat="step in context.steps">
-        <div 
-             class="stepBox"
-             data-ng-class="{'col-md-6': !editing, 'col-md-12': editing}"
-             data-ng-init="editing=false"
+    <div data-as-sortable="stepsSortableOptions" data-ng-model="context.steps">
+      <div data-ng-repeat="step in context.steps | orderBy:'presentation_order'" data-as-sortable-item>
+        <div class="stepBox col-md-12"
              data-ng-controller="AdminStepEditorCtrl">
           <div class="card step">
-            <div class="configEditorHeader handle" data-ng-click="editing=!editing">
-              <span class="badge">{{$index + 1}}</span>
-              <span>{{step.label}}</span>
+            <div class="stepEditorHeader sortableHandle" data-ng-click="toggleEditing()">
+              <div class="row" data-as-sortable-item-handle>
+                <span class="badge">{{$index + 1}}</span>
+                <span>{{step.label}}</span>
+                <span class="pull-right" popover="{{'Click to edit, drag to order' | translate}}" popover-placement="left" popover-trigger="mouseenter">
+                  <i class="glyphicon glyphicon-th"></i>
+                </span>
+              </div>
             </div>
             <div data-ng-form="" name="editStep" data-ng-show="editing">
-              <hr/>
               <div class="row">
-                <div class="form-group col-md-6">
-                  <label data-translate>Label</label>
-                  <input class="form-control" data-ng-model="step.label" type="text" required />
+                <div class="form-group">
+                  <div class="col-md-6">
+                    <label data-translate>Label</label>
+                    <input class="form-control" data-ng-model="step.label" type="text" required />
+                  </div>
                 </div>
               </div>
               <div class="row">
@@ -62,6 +65,12 @@
                 </div>
               </div>
               <div class="row">
+                <div class="form-group col-md-6">
+                  <label data-translate>Presentation Order</label>
+                  <input class="form-control" data-ng-model="step.presentation_order" value="{{step.presentation_order}}" type="number" min="0" max="99">
+                </div>
+              </div>
+              <div class="row">
                 <div class="col-md-6" data-ng-include="'views/admin/add_field.html'"></div>
                 <div class="col-md-6" data-ng-include="'views/admin/add_field_from_template.html'"></div>
               </div>
@@ -76,7 +85,7 @@
                   </div>
               </div>
             </div>
-            <hr>
+            <hr />
             <div class="stepActions">
               <button class="btn btn-default"
                       data-ng-show="!editing"

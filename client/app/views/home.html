@@ -1,14 +1,14 @@
 <div id="HomePageBox">
 
   <div id="HomePageBoxHeader">
-    <div id="HomePageBoxNodePresentation">{{node.presentation}}</div>
-    <div id="HomePageBoxNodeDescription" class="preformatted">{{node.description}}</div>
+    <div id="HomePageBoxNodePresentation">{{::node.presentation}}</div>
+    <div id="HomePageBoxNodeDescription" class="preformatted">{{::node.description}}</div>
   </div>
 
-  <div id="WhistleblowerBox" class="ng-cloak row">
+  <div id="WhistleblowerBox" class="row">
     <div data-ng-show="node.configured">
       <div id="WhistleblowerSubmitBoxButtonDisabled" class="row" data-ng-show="!node.tor2web_submission && !anonymous">
-        <button class="btn btn-danger" disabled="disabled">
+        <button class="btn btn-danger" disable="disabled">
           <i class="glyphicon glyphicon-ban-circle"></i>
           <span data-translate>Whistleblowing disabled</span>
         </button>
@@ -26,12 +26,12 @@
       <div class="row" data-ng-show="(node.tor2web_submission || anonymous) && node.accept_submissions">
         <div id="WhistleblowerSubmitBox">
           <div id="WhistleblowerSubmitBoxHeader">
-            <span>{{node.whistleblowing_question}}</span>
+            <span>{{::node.whistleblowing_question}}</span>
           </div>
           <div id="WhistleblowerSubmitBoxButton">
             <a data-ng-click="goToSubmission()" class="btn btn-primary">
               <i class="glyphicon glyphicon-bullhorn"></i>
-              <span>{{node.whistleblowing_button}}</span>
+              <span>{{::node.whistleblowing_button}}</span>
             </a>
           </div>
         </div>

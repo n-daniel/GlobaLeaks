@@ -8,6 +8,39 @@ GLClient.controller('SubmissionCtrl',
   $scope.contexts_selectable = $location.search().contexts_selectable;
   $scope.receivers_selectable = $location.search().receivers_selectable;
 
+  $scope.problemToBeSolved = false;
+  $scope.problemModal = undefined;
+
+  $scope.problemSolved = function() {
+    $scope.submission._submission.human_captcha = false;
+    $scope.problemToBeSolved = false;
+    $scope.problemModal = undefined;
+  }
+
+  $scope.openProblemDialog = function(submission){
+    if ($scope.problemModal) {
+      $scope.problemModal.dismiss();
+    }
+
+    $scope.problemModal = $modal.open({
+        templateUrl:  'views/partials/captchas.html',
+        controller: 'ConfirmableDialogCtrl',
+        backdrop: 'static',
+        keyboard: false,
+        resolve: {
+          object: function () {
+            return submission;
+          }
+        }
+
+    });
+
+    $scope.problemModal.result.then(
+       function(result) { $scope.problemSolved($scope.submission); },
+       function(result) { }
+    );
+  };
+
   if ($scope.receivers_ids) {
     try {
       $scope.receivers_ids = JSON.parse($scope.receivers_ids);
@@ -127,13 +160,19 @@ GLClient.controller('SubmissionCtrl',
     $scope.submission.create(context.id, receivers_ids, function () {
       startCountdown();
 
+      $scope.problemToBeSolved = $scope.submission._submission.human_captcha !== false;
+
+      if ($scope.problemToBeSolved) {
+        $scope.openProblemDialog($scope.submission);
+      }
+
       if ($scope.submission.context.show_receivers_in_alphabetical_order) {
         $scope.receiversOrderPredicate = 'name';
       } else {
         $scope.receiversOrderPredicate = 'presentation_order';
       }
 
-      if ((!$scope.receivers_selectable && !$scope.submission.context.show_receivers)) {
+      if ((!$scope.receivers_selectable || !$scope.submission.context.show_receivers)) {
         $scope.skip_first_step = true;
         $scope.selection = 1;
       } else {
@@ -213,6 +252,21 @@ controller('SubmissionFieldCtrl', ['$scope', function ($scope) {
     } else {
       return "";
     }
+  };
+
+  $scope.validateRequiredCheckbox = function(field) {
+    if (!field.required) {
+      return true;
+    }
+
+    var ret = false;
+    angular.forEach(field.value, function (value) {
+      if (value.value && value.value === true) {
+        ret |= true;
+      }
+    });
+
+    return ret;
   };
 
 }]).

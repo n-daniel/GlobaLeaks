@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-ng-app="GLClient" data-ng-controller="MainCtrl">
+<html data-ng-app="GLClient" data-ng-controller="MainCtrl" ng-strict-di>
   <head>
     <title ng-bind="node.name">GlobaLeaks</title>
     <meta charset="utf-8">
@@ -78,7 +78,7 @@
     </div>
 
     <!-- this is resolved by angular-js only at the end of the startup (js loading) -->
-    <div data-ng-if="started" data-ng-include="'globaleaks.html'"></div>
+    <div data-ng-if="started" class="ng-cloak" data-ng-include="'globaleaks.html'"></div>
 
     <!-- build:js browserchecks.js -->
     <script src="components/bowser/bowser.js"></script>

@@ -75,15 +75,15 @@ function($scope, $modal) {
 GLClient.controller('AdminReceiversEditorCtrl', ['$scope', 'passwordWatcher', 'CONSTANTS',
   function($scope, passwordWatcher, CONSTANTS) {
 
-    $scope.timezones = CONSTANTS.timezones;
-
-    passwordWatcher($scope, 'receiver.password');
-
     $scope.editing = false;
 
     $scope.toggleEditing = function () {
       $scope.editing = $scope.editing ^ 1;
     };
+
+    $scope.timezones = CONSTANTS.timezones;
+
+    passwordWatcher($scope, 'receiver.password');
 
     $scope.isSelected = function (context) {
       return $scope.receiver.contexts.indexOf(context.id) !== -1;

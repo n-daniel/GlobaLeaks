@@ -276,6 +276,7 @@ class TestGL(unittest.TestCase):
         dummySubmissionDict['receivers'] = (yield get_context(context_id, 'en'))['receivers']
         dummySubmissionDict['files'] = []
         dummySubmissionDict['human_captcha_answer'] = 0
+        dummySubmissionDict['proof_of_work'] = 0
         dummySubmissionDict['wb_steps'] = yield self.fill_random_fields(context_id)
 
         defer.returnValue(dummySubmissionDict)
@@ -791,7 +792,8 @@ class MockDict():
                 'options': [
                     {
                         "id": "2ebf6df8-289a-4f17-aa59-329fe11d232e",
-                        "value": "", "attrs": {"name": "Male"}
+                        "value": "",
+                        "attrs": {"name": "Male"}
                     },
                     {
                         "id": "9c7f343b-ed46-4c9e-9121-a54b6e310123",
@@ -810,14 +812,17 @@ class MockDict():
                 'label': u'Step 1',
                 'description': u'Step Description',
                 'hint': u'Step Hint',
+                'presentation_order': 0,
                 'children': {}
             },
             {
                 'label': u'Step 2',
                 'description': u'Step Description',
                 'hint': u'Step Hint',
+                'presentation_order': 1,
                 'children': {}
-            }]
+            }
+        ]
 
         self.dummyContext = {
             # localized stuff
@@ -913,7 +918,7 @@ def do_appdata_init(store):
         if not appdata:
             raise Exception
 
-    except Exception as xxx:
+    except Exception:
         appdata = models.ApplicationData()
         source = load_appdata()
         appdata.version = source['version']
@@ -937,5 +942,6 @@ def create_dummy_field(store, **custom_attrs):
         'x': 0,
         'y': 0
     }
+
     attrs.update(custom_attrs)
     return models.Field.new(store, attrs).id

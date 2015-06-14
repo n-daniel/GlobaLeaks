@@ -3,6 +3,22 @@
   text-align: right;
 }
 
+#HeaderBoxContentLeft {
+  float: right;
+}
+
+#HeaderBoxContentRight {
+  float: left;
+}
+
+#LogoBox {
+  float: right;
+}
+
+#TitleBox {
+  float: right;
+}
+
 .LoginErrorBox {
   text-align: right;
 }
@@ -20,6 +36,11 @@
   right: -15px;
 }
 
+#StepNavBar, .SubmissionNavButton {
+  margin-left: 10px;
+  margin-right: 0px;
+}
+
 /* Fix to bootstrap-rtl /*/
 .pull-left {
   float: right !important;
@@ -27,10 +48,4 @@
 
 .pull-right {
   float: left !important;
-}
-
-/* Overrides to submission.css */
-#StepNavBar, .SubmissionNavButton {
-  margin-left: 10px;
-  margin-right: 0px;
 }

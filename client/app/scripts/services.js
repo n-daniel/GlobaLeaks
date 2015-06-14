@@ -174,25 +174,27 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
 
     /* This interceptor is responsible for keeping track of the HTTP requests
      * that are sent and their result (error or not error) */
-    return function(promise) {
+    return {
 
-      $http = $http || $injector.get('$http');
+      response: function(response) {
 
-      $rootScope.pendingRequests = function () {
-        return $http.pendingRequests.length;
-      };
+        $http = $http || $injector.get('$http');
 
-      $rootScope.showRequestBox = true;
+        $rootScope.pendingRequests = function () {
+          return $http.pendingRequests.length;
+        };
 
-      return promise.then(function(response) {
+        $rootScope.showRequestBox = true;
+
 
         if ($http.pendingRequests.length < 1) {
           $rootScope.showRequestBox = false;
         }
 
         return response;
-      }, function(response) {
-        /*
+      },
+      responseError: function(response) {
+        /* 
            When the response has failed write the rootScope
            errors array the error message.
         */
@@ -216,20 +218,20 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         }
 
         /* 30: Not Authenticated / 24: Wrong Authentication */
-	if (error.code === 30 || error.code === 24) {
+        if (error.code === 30 || error.code === 24) {
 
           if (error.code === 24) {
-              $rootScope.logout();
+            $rootScope.logout();
           } else {
             var redirect_path = '/login';
 
             // If we are wb on the status page, redirect to homepage
             if (source_path === '/status') {
-                redirect_path = '/';
+              redirect_path = '/';
             }
             // If we are admin on the /admin(/*) pages, redirect to /admin
             else if (source_path.indexOf('/admin') === 0) {
-                redirect_path = '/admin';
+              redirect_path = '/admin';
             }
 
             // Only redirect if we are not alread on the login page
@@ -240,14 +242,10 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           }
         }
 
-        if (!$rootScope.errors) {
-          $rootScope.errors = [];
-        }
-
         $rootScope.errors.push(error);
 
         return $q.reject(response);
-      });
+      }
     };
 }]).
   factory('GLCache',['$cacheFactory', function ($cacheFactory) {
@@ -316,30 +314,57 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         var setCurrentContextReceivers = function(context_id, receivers_ids) {
             self.context = $filter('filter')($rootScope.contexts, {"id": context_id})[0];
 
+<<<<<<< HEAD
+=======
+        var receivers_selected_count = 0;
+        self.receivers_selected = {};
+        self.receivers = [];
+>>>>>>> master
         angular.forEach($rootScope.receivers, function(receiver) {
-          // enumerate only the receivers of the current context
           if (self.context.receivers.indexOf(receiver.id) !== -1) {
-            if (receiver.pgp_key_status !== 'enabled') {
-              receiver.missing_pgp = true;
-            }
-
             self.receivers.push(receiver);
+
+            self.receivers_selected[receiver.id] = false;
 
             if (receivers_ids) {
               if (receivers_ids.indexOf(receiver.id) !== -1) {
-                self.receivers_selected[receiver.id] = true;
-                return;
+                if ((receiver.pgp_key_status === 'enabled' || $rootScope.node.allow_unencrypted) ||
+                    receiver.configuration !== 'unselectable') {
+                  self.receivers_selected[receiver.id] = true;
+                }
+              }
+            } else {
+              if (receiver.pgp_key_status === 'enabled' || $rootScope.node.allow_unencrypted) {
+                if (receiver.configuration == 'default') {
+                  self.receivers_selected[receiver.id] = self.context.select_all_receivers;
+                } else if (receiver.configuration == 'forcefully_selected') {
+                  self.receivers_selected[receiver.id] = true;
+                }
               }
             }
 
-            if (receiver.configuration == 'default') {
-              self.receivers_selected[receiver.id] = self.context.select_all_receivers !== false;
-            } else if (receiver.configuration == 'forcefully_selected') {
-              self.receivers_selected[receiver.id] = true;
+            if (self.receivers_selected[receiver.id]) {
+              receivers_selected_count++;
             }
+
           }
         });
 
+        // temporary fix for contitions in which select_all_receivers is marked false
+        // but the admin has forgotten to mark at least one receiver to automtically selected
+        // nor the user is coming from a link with explicit receivers selection.
+        // in all this conditions we select all receivers for which submission is allowed.
+        if (receivers_selected_count === 0 && !self.context.select_all_receivers) {
+          angular.forEach($rootScope.receivers, function(receiver) {
+            if (self.context.receivers.indexOf(receiver.id) !== -1) {
+              if (receiver.pgp_key_status === 'enabled' || $rootScope.node.allow_unencrypted) {
+                if (receiver.configuration !== 'unselectable') {
+                  self.receivers_selected[receiver.id] = true;
+                }
+              }
+            }
+          });
+        }
       };
 
       /**
@@ -742,11 +767,10 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
   factory('ReceiverOverview', ['$resource', function($resource) {
     return $resource('admin/overview/users');
 }]).
-  factory('Admin', ['$resource', function($resource) {
-    var self = this;
-
-    function Admin() {
+  factory('Admin', ['$resource', '$q', function($resource, $q) {
+    return function(fn) {
       var self = this,
+
         adminContextsResource = $resource('admin/contexts'),
         adminContextResource = $resource('admin/context/:context_id',
           {context_id: '@id'},
@@ -797,37 +821,52 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
       adminReceiverResource.prototype.toString = function() { return "Admin Receiver"; };
       adminNotificationResource.prototype.toString = function() { return "Admin Notification"; };
 
+      self.node = adminNodeResource.get();
       self.context = adminContextResource;
       self.contexts = adminContextsResource.query();
+      self.field_templates = adminFieldTemplatesResource.query();
+      self.fields = adminFieldsResource.query();
+      self.fieldtemplate = adminFieldTemplateResource;
+      self.field = adminFieldResource;
+      self.receiver = adminReceiverResource;
+      self.receivers = adminReceiversResource.query();
+      self.notification = adminNotificationResource.get();
 
-      self.new_context = function() {
-        var context = new adminContextResource();
-        context.name = "";
-        context.description = "";
-        context.steps = [];
-        context.receivers = [];
-        context.select_all_receivers = false;
-        context.tip_timetolive = 15;
-        context.receiver_introduction = "";
-        context.can_postpone_expiration = true;
-        context.can_delete_submission = true;
-        context.maximum_selectable_receivers = 0;
-        context.show_small_cards = false;
-        context.show_receivers = true;
-        context.enable_private_messages = true;
-        context.presentation_order = 0;
-        context.show_receivers_in_alphabetical_order = false;
-        context.reset_steps = false;
-        return context;
-      };
+      $q.all([self.node.$promise,
+              self.contexts.$promise,
+              self.fields.$promise,
+              self.field_templates.$promise,
+              self.receivers.$promise,
+              self.notification.$promise]).then(function() {
 
-      self.template_fields = {};
-      self.field_templates = adminFieldTemplatesResource.query(function(){
+        self.new_context = function() {
+          var context = new adminContextResource();
+          context.name = "";
+          context.description = "";
+          context.steps = [];
+          context.receivers = [];
+          context.select_all_receivers = false;
+          context.tip_timetolive = 15;
+          context.receiver_introduction = "";
+          context.can_postpone_expiration = true;
+          context.can_delete_submission = true;
+          context.maximum_selectable_receivers = 0;
+          context.show_small_cards = false;
+          context.show_receivers = true;
+          context.enable_comments = true;
+          context.enable_private_messages = false;
+          context.presentation_order = 0;
+          context.show_receivers_in_alphabetical_order = false;
+          context.reset_steps = false;
+          return context;
+        };
+
+        self.template_fields = {};
         angular.forEach(self.field_templates, function(field){
           self.template_fields[field.id] = field;
         });
-      });
 
+<<<<<<< HEAD
       self.fields = adminFieldsResource.query();
 
       self.new_field = function(step_id) {
@@ -849,48 +888,95 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         field.step_id = step_id;
         return field;
       };
+=======
+        self.new_field = function(step_id) {
+          var field = new adminFieldResource();
+          field.label = '';
+          field.type = '';
+          field.description = '';
+          field.is_template = false;
+          field.hint = '';
+          field.multi_entry = false;
+          field.options = [];
+          field.required = false;
+          field.preview = false;
+          field.stats_enabled = false;
+          field.x = 0;
+          field.y = 0;
+          field.children = [];
+          field.fieldgroup_id = '';
+          field.step_id = step_id;
+          return field;
+        };
+>>>>>>> master
 
-      self.new_field_from_template = function(template_id, step_id) {
-        var field = new adminFieldResource();
-        field.step_id = step_id;
-        field.template_id = template_id;
-        return field.$save();
-      };
+        self.new_field_from_template = function(template_id, step_id) {
+          var field = new adminFieldResource();
+          field.step_id = step_id;
+          field.template_id = template_id;
+          return field.$save();
+        };
 
-      self.new_field_template = function () {
-        var field = new adminFieldTemplateResource();
-        field.label = '';
-        field.type = '';
-        field.description = '';
-        field.is_template = true;
-        field.hint = '';
-        field.multi_entry = false;
-        field.options = [];
-        field.required = false;
-        field.preview = false;
-        field.stats_enabled = false;
-        field.x = 0;
-        field.y = 0;
-        field.children = [];
-        field.fieldgroup_id = '';
-        field.step_id = '';
-        return field;
-      };
+        self.new_field_template = function () {
+          var field = new adminFieldTemplateResource();
+          field.label = '';
+          field.type = '';
+          field.description = '';
+          field.is_template = true;
+          field.hint = '';
+          field.multi_entry = false;
+          field.options = [];
+          field.required = false;
+          field.preview = false;
+          field.stats_enabled = false;
+          field.x = 0;
+          field.y = 0;
+          field.children = [];
+          field.fieldgroup_id = '';
+          field.step_id = '';
+          return field;
+        };
 
-      self.fill_default_field_options = function(field) {
-        if (field.type == 'tos') {
-          field.options.push({'attrs':
-            {
-              'clause': '',
-              'agreement_statement': ''
-            }
-          });
-        }
-      };
+        self.fill_default_field_options = function(field) {
+          if (field.type == 'tos') {
+            field.options.push({'attrs':
+              {
+                'clause': '',
+                'agreement_statement': ''
+              }
+            });
+          }
+        };
 
-      self.receiver = adminReceiverResource;
-      self.receivers = adminReceiversResource.query();
+        self.new_receiver = function () {
+          var receiver = new adminReceiverResource();
+          receiver.password = '';
+          receiver.contexts = [];
+          receiver.description = '';
+          receiver.mail_address = '';
+          receiver.ping_mail_address = '';
+          receiver.can_delete_submission = false;
+          receiver.can_postpone_expiration = false;
+          receiver.tip_notification = true;
+          receiver.ping_notification = false;
+          receiver.pgp_key_info = '';
+          receiver.pgp_key_fingerprint = '';
+          receiver.pgp_key_remove = false;
+          receiver.pgp_key_public = '';
+          receiver.pgp_key_expiration = '';
+          receiver.pgp_key_status = 'ignored';
+          receiver.pgp_enable_notification = false;
+          receiver.presentation_order = 0;
+          receiver.state = 'enable';
+          receiver.configuration = 'default';
+          receiver.password_change_needed = true;
+          receiver.language = 'en';
+          receiver.timezone = 0;
+          receiver.tip_expiration_threshold = self.notification.tip_expiration_threshold;
+          return receiver;
+        };
 
+<<<<<<< HEAD
       self.new_receiver = function () {
         var receiver = new adminReceiverResource();
         receiver.password = '';
@@ -921,20 +1007,12 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         receiver.tip_expiration_threshold = self.notification.tip_expiration_threshold;
         return receiver;
       };
+=======
+        fn(this);
+>>>>>>> master
 
-      self.node = adminNodeResource.get(function(){
-        self.node.password = '';
-        self.node.old_password = '';
       });
-
-      self.fieldtemplate = adminFieldTemplateResource;
-      self.field = adminFieldResource;
-
-      self.notification = adminNotificationResource.get();
     }
-
-    return Admin;
-
 }]).
   factory('TipOverview', ['$resource', function($resource) {
     return $resource('admin/overview/tips');
@@ -1116,5 +1194,5 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
      ]
 }).
   config(['$httpProvider', function($httpProvider) {
-    $httpProvider.responseInterceptors.push('globalInterceptor');
+    $httpProvider.interceptors.push('globalInterceptor');
 }]);

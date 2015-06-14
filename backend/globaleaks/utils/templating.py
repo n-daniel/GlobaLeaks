@@ -9,7 +9,8 @@
 # https://github.com/globaleaks/GlobaLeaks/wiki/Customization-guide#customize-notification
 
 from globaleaks.settings import GLSetting
-from globaleaks.utils.utility import ISO8601_to_pretty_str, ISO8601_to_day_str, datetime_now
+from globaleaks.utils.utility import ISO8601_to_pretty_str, ISO8601_to_day_str, \
+    ISO8601_to_datetime, datetime_now
 
 def dump_submission_steps(wb_steps):
     dumptext = u"FIELD_MAIL_DUMP_STILL_NEED_TO_BE_IMPLEMENTED"
@@ -47,7 +48,7 @@ class Templating(object):
                                   # and currently only one template is defined
                                   # considering exportable only not non sensitive info
                                   u'upcoming_tip_expiration': TipKeyword,
-                                  u'receiver_threshold_reached': ReceiverKeyword,
+                                  u'receiver_notification_limit_reached': ReceiverKeyword,
                                 }
 
         if event_dicts.type not in supported_event_types.keys():
@@ -194,7 +195,7 @@ class TipKeyword(_KeyWord):
         return ISO8601_to_day_str(self.tip['expiration_date'], float(self.receiver['timezone']))
 
     def ExpirationWatch(self):
-        missing_time = self.tip['expiration_date'] - datetime_now()
+        missing_time = ISO8601_to_datetime(self.tip['expiration_date']) - datetime_now()
         missing_hours = int(divmod(missing_time.total_seconds(), 3600)[0])
         return unicode(missing_hours)
 

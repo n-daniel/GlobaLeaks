@@ -1,8 +1,8 @@
 describe('globaLeaks process', function() {
   var tip_text = 'topsecret';
   var receipt = '';
-  var private_message = 'priv8 message';
-  var private_message_reply = 'priv8 message reply';
+  var comment = 'comment';
+  var comment_reply = 'comment reply';
   var receiver_username = "Receiver 1";
   var receiver_password = "ACollectionOfDiplomaticHistorySince_1966_ToThe_Pr esentDay#"
 
@@ -12,7 +12,7 @@ describe('globaLeaks process', function() {
     browser.get('/#/');
     element(by.model('formatted_keycode')).sendKeys(receipt).then(function() {
       element(by.css('[data-ng-click="view_tip(formatted_keycode)"]')).click().then(function() {
-        expect(browser.getLocationAbsUrl()).toContain('/#/status');
+        expect(browser.getLocationAbsUrl()).toContain('/status');
         deferred.fulfill();
       });
     });
@@ -27,7 +27,7 @@ describe('globaLeaks process', function() {
     element(by.model('loginUsername')).element(by.xpath(".//*[text()='" + username + "']")).click().then(function() {
       element(by.model('loginPassword')).sendKeys(password).then(function() {
         element(by.xpath('//button[contains(., "Log in")]')).click().then(function() {
-          expect(browser.getLocationAbsUrl()).toContain('/#/receiver/tips');
+          expect(browser.getLocationAbsUrl()).toContain('/receiver/tips');
           deferred.fulfill();
         });
       });
@@ -39,22 +39,21 @@ describe('globaLeaks process', function() {
   it('should redirect to /submission by clicking on the blow the whisle button', function() {
     browser.get('/#/');
     element(by.css('[data-ng-click="goToSubmission()"]')).click().then(function () {
-      expect(browser.getLocationAbsUrl()).toContain('/#/submission');
+      expect(browser.getLocationAbsUrl()).toContain('/submission');
     });
   });
 
   it('should be able to submit a tip', function() {
     browser.get('/#/submission');
 
-    element(by.id('step-0')).element(by.id('receiver-0')).click().then(function () {
-      element(by.id('NextStepButton')).click().then(function () {
-        element(by.id('step-1')).element(by.id('field-0-input')).sendKeys(tip_text).then(function () {
-          browser.executeScript('$(\'input[type="file"]\').attr("style", "opacity:0; position:absolute;");');
-          element(by.id('step-1')).element(by.id('field-3-input')).element(by.xpath("//input[@type='file']")).sendKeys(__filename).then(function() {
-            element(by.id('NextStepButton')).click().then(function () {
-              element(by.id('step-2')).element(by.id('field-0-input')).click();
+    element(by.id('NextStepButton')).click().then(function () {
+      element(by.id('step-1')).element(by.id('field-0-input')).sendKeys(tip_text).then(function () {
+        browser.executeScript('$(\'input[type="file"]\').attr("style", "opacity:0; position:absolute;");');
+        element(by.id('step-1')).element(by.id('field-3-input')).element(by.xpath("//input[@type='file']")).sendKeys(__filename).then(function() {
+          element(by.id('NextStepButton')).click().then(function () {
+            element(by.id('step-2')).element(by.id('field-0-input')).click().then(function () {
               element(by.id('SubmitButton')).click().then(function() {
-                expect(browser.getLocationAbsUrl()).toContain('/#/receipt');
+                expect(browser.getLocationAbsUrl()).toContain('/receipt');
                 element(by.id('KeyCode')).getText().then(function (txt) {
                   receipt = txt;
                 });
@@ -80,27 +79,27 @@ describe('globaLeaks process', function() {
     });
   });
 
-  it('Receiver should be able to send a private message to the whistleblower', function() {
+  it('Receiver should be able to leave a comment to the whistleblower', function() {
     login_receiver(receiver_username, receiver_password).then(function () {
       element(by.id('tip-0')).element(by.css('.tip-action-open')).click().then(function() {
-        element(by.model('tip.newMessageContent')).sendKeys(private_message);
-        element(by.id('message-action-send')).click().then(function() {
-          element(by.id('message-0')).element(by.css('.preformatted')).getText().then(function(message) {
-            expect(message).toContain(private_message);
+        element(by.model('tip.newCommentContent')).sendKeys(comment);
+        element(by.id('comment-action-send')).click().then(function() {
+          element(by.id('comment-0')).element(by.css('.preformatted')).getText().then(function(c) {
+            expect(c).toContain(comment);
           });
         });
       });
     });
   });
 
-  it('Whistleblower should be able to read the private message from the receiver and reply', function() {
+  it('Whistleblower should be able to read the comment from the receiver and reply', function() {
     login_whistleblower(receipt).then(function () {
-      element(by.id('message-0')).element(by.css('.preformatted')).getText().then(function(message) {
-        expect(message).toEqual(private_message);
-        element(by.model('tip.newMessageContent')).sendKeys(private_message_reply);
-        element(by.css('[data-ng-click="newMessage()"]')).click().then(function() {
-          element(by.id('message-1')).element(by.css('.preformatted')).getText().then(function(message) {
-            expect(message).toContain(private_message);
+      element(by.id('comment-0')).element(by.css('.preformatted')).getText().then(function(c) {
+        expect(c).toEqual(comment);
+        element(by.model('tip.newCommentContent')).sendKeys(comment_reply);
+        element(by.id('comment-action-send')).click().then(function() {
+          element(by.id('comment-0')).element(by.css('.preformatted')).getText().then(function(c) {
+            expect(c).toContain(comment_reply);
           });
         });
       });
@@ -133,7 +132,7 @@ describe('globaLeaks process', function() {
       element(by.id('tip-0')).element(by.css('.tip-action-open')).click().then(function() {
         element(by.css('.tip-action-delete')).click().then(function () {
           element(by.css('.modal-action-ok')).click().then(function() {
-            expect(browser.getLocationAbsUrl()).toContain('/#/receiver/tips');
+            expect(browser.getLocationAbsUrl()).toContain('/receiver/tips');
             //TODO: check delete
           });
         });

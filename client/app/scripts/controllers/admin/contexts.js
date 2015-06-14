@@ -40,16 +40,6 @@ GLClient.controller('AdminContextsCtrl',
     });
   };
 
-  $scope.fieldsSortableOptions = {
-    stop: function (e, ui) {
-      var i = 0;
-      angular.forEach(ui.item.scope().context.fields, function (field, key) {
-        field.presentation_order = i + 1;
-        i += 1;
-      });
-    }
-  };
-
   $scope.contextDeleteDialog = function(context){
     var modalInstance = $modal.open({
         templateUrl:  'views/partials/context_delete.html',
@@ -77,6 +67,9 @@ GLClient.controller('AdminContextsCtrl',
   };
 
   $scope.sortableOptions = {
+    accept: function(sourceItemHandleScope, destSortableScope) {
+      return (sourceItemHandleScope.itemScope.sortableScope.$id == destSortableScope.$id);
+    },
     orderChanged: function(e) {
       var contexts = angular.copy($scope.admin.contexts);
 
@@ -95,25 +88,41 @@ GLClient.controller('AdminContextsCtrl',
 GLClient.controller('AdminContextsEditorCtrl', ['$scope',
   function($scope) {
 
-    $scope.editing = $scope.context.description === undefined;
+  $scope.editing = false;
 
-    $scope.toggleEditing = function () {
-      $scope.editing = $scope.editing ^ 1;
-    };
+  $scope.toggleEditing = function () {
+    $scope.editing = $scope.editing ^ 1;
+  };
 
-    $scope.isSelected = function (receiver) {
-      return $scope.context.receivers.indexOf(receiver.id) !== -1;
-    };
+  $scope.isSelected = function (receiver) {
+    return $scope.context.receivers.indexOf(receiver.id) !== -1;
+  };
 
-    $scope.toggle = function(receiver) {
-      var idx = $scope.context.receivers.indexOf(receiver.id);
-      if (idx === -1) {
-        $scope.context.receivers.push(receiver.id);
-      } else {
-        $scope.context.receivers.splice(idx, 1);
-      }
+  $scope.toggle = function(receiver) {
+    var idx = $scope.context.receivers.indexOf(receiver.id);
+    if (idx === -1) {
+      $scope.context.receivers.push(receiver.id);
+    } else {
+      $scope.context.receivers.splice(idx, 1);
+    }
+    $scope.editContext.$dirty = true;
+    $scope.editContext.$pristine = false;
+  };
+
+  $scope.stepsSortableOptions = {
+    accept: function(sourceItemHandleScope, destSortableScope) {
+      return (sourceItemHandleScope.itemScope.sortableScope.$id == destSortableScope.$id);
+    },
+    orderChanged: function(e) {
+      var i = 0;
+      angular.forEach($scope.context.steps, function (step, key) {
+        step.presentation_order = i + 1;
+        i += 1;
+      });
+
       $scope.editContext.$dirty = true;
       $scope.editContext.$pristine = false;
-    };
+    }
+  };
 
 }]);

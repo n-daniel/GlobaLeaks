@@ -1,8 +1,8 @@
 'use strict';
 
 var GLClient = angular.module('GLClient', [
-    'ngRoute',
     'ngCookies',
+    'ngRoute',
     'ui.bootstrap',
     'ang-drag-drop',
     'ui.sortable',
@@ -14,8 +14,10 @@ var GLClient = angular.module('GLClient', [
     'e2e',
     'GLClientFilters'
   ]).
-  config(['$routeProvider', '$translateProvider', '$tooltipProvider',
-    function($routeProvider, $translateProvider, $tooltipProvider) {
+  config(['$compileProvider', '$routeProvider', '$translateProvider', '$tooltipProvider',
+    function($compileProvider, $routeProvider, $translateProvider, $tooltipProvider) {
+
+    $compileProvider.debugInfoEnabled(false);
 
     $routeProvider.
       when('/wizard', {
@@ -195,6 +197,8 @@ var GLClient = angular.module('GLClient', [
         suffix: '.json'
       });
 
+      $translateProvider.useSanitizeValueStrategy('escape');
+
       $tooltipProvider.options({appendToBody: true});
 }]).
   config(['flowFactoryProvider', function (flowFactoryProvider) {
@@ -207,6 +211,9 @@ var GLClient = angular.module('GLClient', [
     };
 }]).
   run(['$http', '$rootScope', function ($http, $rootScope) {
+
+     $rootScope.successes = [];
+     $rootScope.errors = [];
 
      var globaleaksRequestInterceptor = function(data, headers) {
 
@@ -229,9 +236,10 @@ var GLClient = angular.module('GLClient', [
 
     $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
         if (current.$$route) {
+          $rootScope.successes = [];
+          $rootScope.errors = [];
           $rootScope.header_title = current.$$route.header_title;
           $rootScope.header_subtitle = current.$$route.header_subtitle;
-          $rootScope.errors = [];
         }
     });
 

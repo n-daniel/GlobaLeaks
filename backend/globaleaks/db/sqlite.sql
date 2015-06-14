@@ -61,6 +61,7 @@ CREATE TABLE context (
     maximum_selectable_receivers INTEGER,
     show_small_cards INTEGER NOT NULL,
     show_receivers INTEGER NOT NULL,
+    enable_comments INTEGER NOT NULL,
     enable_private_messages INTEGER NOT NULL,
     presentation_order INTEGER,
     show_receivers_in_alphabetical_order INTEGER NOT NULL,
@@ -109,6 +110,7 @@ CREATE TABLE internaltip (
     wb_steps BLOB,
     wb_e2e_public VARCHAR,
     is_e2e_encrypted INTEGER NOT NULL,
+    preview BLOB,
     last_activity VARCHAR,
     context_id VARCHAR NOT NULL,
     new INTEGER NOT NULL,
@@ -188,7 +190,7 @@ CREATE TABLE notification (
     message_mail_title BLOB,
     comment_mail_template BLOB,
     comment_mail_title BLOB,
-    tip_expiration_template BLOB,
+    tip_expiration_mail_template BLOB,
     tip_expiration_mail_title BLOB,
     admin_anomaly_mail_template BLOB,
     admin_anomaly_mail_title BLOB,
@@ -201,8 +203,8 @@ CREATE TABLE notification (
     pgp_alert_mail_template BLOB,
     pgp_alert_mail_title BLOB,
     notification_digest_mail_title BLOB,
-    receiver_threshold_reached_mail_template BLOB,
-    receiver_threshold_reached_mail_title BLOB,
+    receiver_notification_limit_reached_mail_template BLOB,
+    receiver_notification_limit_reached_mail_title BLOB,
     zip_description BLOB,
     ping_mail_template BLOB,
     ping_mail_title BLOB,
@@ -372,7 +374,7 @@ CREATE TABLE fieldoption (
     creation_date VARCHAR NOT NULL,
     field_id VARCHAR NOT NULL,
     attrs TEXT NOT NULL DEFAULT '{}',
-    number INTEGER NOT NULL CHECK(number > 0),
+    presentation_order INTEGER NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY(field_id) REFERENCES field(id) ON DELETE CASCADE
 );
@@ -384,8 +386,7 @@ CREATE TABLE step (
     description TEXT NOT NULL,
     hint TEXT NOT NULL,
     context_id VARCHAR NOT NULL,
-    number INTEGER NOT NULL CHECK(number > 0),
+    presentation_order INTEGER NOT NULL,
     PRIMARY KEY (id)
-    UNIQUE (context_id, number),
     FOREIGN KEY(context_id) REFERENCES context(id) ON DELETE CASCADE
 );

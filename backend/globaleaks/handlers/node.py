@@ -116,7 +116,7 @@ def anon_serialize_context(store, context, language):
         return None
 
     steps = [anon_serialize_step(store, s, language)
-             for s in context.steps.order_by(models.Step.number)]
+             for s in context.steps.order_by(models.Step.presentation_order)]
 
     ret_dict = {
         'id': context.id,
@@ -126,6 +126,7 @@ def anon_serialize_context(store, context, language):
         'maximum_selectable_receivers': context.maximum_selectable_receivers,
         'show_small_cards': context.show_small_cards,
         'show_receivers': context.show_receivers,
+        'enable_comments': context.enable_comments,
         'enable_private_messages': context.enable_private_messages,
         'presentation_order': context.presentation_order,
         'show_receivers_in_alphabetical_order': context.show_receivers_in_alphabetical_order,
@@ -217,6 +218,7 @@ def anon_serialize_step(store, step, language):
 
     ret_dict = {
         'id': step.id,
+        'presentation_order': step.presentation_order,
         'children': fields
     }
 
