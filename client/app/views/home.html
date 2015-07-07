@@ -36,7 +36,7 @@
           </div>
         </div>
         <div id="WhistleblowerLoginBox" class="center-block">
-          <div id="WhistleblowerLoginBoxLabel" data-translate>Have you already filed a submission? Enter your key code.</div>
+          <div id="WhistleblowerLoginBoxLabel" data-translate>Hai già effettuato una segnalazione? Inserisci la tua ricevuta.</div>
           <div data-ng-include="'views/partials/wb_login.html'"></div>
           <div class="LoginErrorBoxHomepage row" data-ng-show="errors[0].code == 29">
             <div class="col-md-12">
@@ -58,6 +58,10 @@
     </div>
   </div>
 
+  <div id="DonationBox">
+    <a href="https://www.transparency.it/fai-una-donazione/" target="_blank" rel="noreferrer"><img data-ng-src="/static/donation.png"></a>
+  </div>
+
   <div id="GlobaleaksInfoBox" class="row">
     <div class="col-md-12">
       <span data-translate>This platform makes use of GlobaLeaks software specifically designed to protect the identity of the submitter and of the receiver in the exchange of leaked materials.</span><br />
@@ -66,4 +70,12 @@
       </p>
     </div>
   </div>
+
+  <div id="EuInfoBox">
+    <div class="row">
+      <img data-ng-src="/static/eu.png" />
+      <div>co-funded by the Prevention of and Fight against Crime Programme of the European Union</div>
+    </div>
+  </div>
+
 </div>
