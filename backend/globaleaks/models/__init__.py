@@ -601,8 +601,6 @@ class Receiver(Model):
     pgp_key_status = Unicode()
     # pgp_statuses: 'disabled', 'enabled'
 
-    # Can be changed only by admin (but also differ from username!)
-    mail_address = Unicode()
     # Can be changed by the user itself
     ping_mail_address = Unicode()
 

@@ -314,12 +314,10 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         var setCurrentContextReceivers = function(context_id, receivers_ids) {
             self.context = $filter('filter')($rootScope.contexts, {"id": context_id})[0];
 
-<<<<<<< HEAD
-=======
         var receivers_selected_count = 0;
         self.receivers_selected = {};
         self.receivers = [];
->>>>>>> master
+
         angular.forEach($rootScope.receivers, function(receiver) {
           if (self.context.receivers.indexOf(receiver.id) !== -1) {
             self.receivers.push(receiver);
@@ -866,29 +864,6 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           self.template_fields[field.id] = field;
         });
 
-<<<<<<< HEAD
-      self.fields = adminFieldsResource.query();
-
-      self.new_field = function(step_id) {
-        var field = new adminFieldResource();
-        field.label = '';
-        field.type = '';
-        field.description = '';
-        field.is_template = false;
-        field.hint = '';
-        field.multi_entry = false;
-        field.options = [];
-        field.required = false;
-        field.preview = false;
-        field.stats_enabled = false;
-        field.x = 0;
-        field.y = 0;
-        field.children = [];
-        field.fieldgroup_id = '';
-        field.step_id = step_id;
-        return field;
-      };
-=======
         self.new_field = function(step_id) {
           var field = new adminFieldResource();
           field.label = '';
@@ -908,7 +883,6 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           field.step_id = step_id;
           return field;
         };
->>>>>>> master
 
         self.new_field_from_template = function(template_id, step_id) {
           var field = new adminFieldResource();
@@ -966,6 +940,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           receiver.pgp_key_expiration = '';
           receiver.pgp_key_status = 'ignored';
           receiver.pgp_enable_notification = false;
+          receiver.e2e_key_public = '';
           receiver.presentation_order = 0;
           receiver.state = 'enable';
           receiver.configuration = 'default';
@@ -976,40 +951,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           return receiver;
         };
 
-<<<<<<< HEAD
-      self.new_receiver = function () {
-        var receiver = new adminReceiverResource();
-        receiver.password = '';
-        receiver.contexts = [];
-        receiver.description = '';
-        receiver.mail_address = '';
-        receiver.ping_mail_address = '';
-        receiver.can_delete_submission = false;
-        receiver.can_postpone_expiration = false;
-        receiver.tip_notification = true;
-        receiver.ping_notification = false;
-        receiver.pgp_key_info = '';
-        receiver.pgp_key_fingerprint = '';
-        receiver.pgp_key_remove = false;
-        receiver.pgp_key_public = '';
-        receiver.pgp_key_expiration = '';
-        receiver.pgp_key_status = 'ignored';
-        receiver.pgp_enable_notification = false;
-        receiver.pgp_key_public = '';
-        receiver.e2e_key_public = '';
-        receiver.e2e_key_private = '';
-        receiver.presentation_order = 0;
-        receiver.state = 'enable';
-        receiver.configuration = 'default';
-        receiver.password_change_needed = true;
-        receiver.language = 'en';
-        receiver.timezone = 0;
-        receiver.tip_expiration_threshold = self.notification.tip_expiration_threshold;
-        return receiver;
-      };
-=======
         fn(this);
->>>>>>> master
 
       });
     }

@@ -225,6 +225,7 @@ def db_create_submission(store, token, request, language):
         log.err("Unable to create a DB entry for file! %s" % excep)
         raise excep
 
+
     try:
         wb_steps = request['wb_steps']
         steps = db_get_context_steps(store, context.id, language)
@@ -267,7 +268,6 @@ class SubmissionCreate(BaseHandler):
     We keep the naming with "Create" suffix for internal globaleaks convention,
     but this handler do not interact with Database, InternalTip, Submissions, etc.
     """
-
     @transport_security_check('wb')
     @unauthenticated
     def post(self):
@@ -306,7 +306,6 @@ class SubmissionInstance(BaseHandler):
     This is the interface for create, populate and complete a submission.
     Relay in the client-server update and exchange of the submissionStatus message.
     """
-
     @transport_security_check('wb')
     @unauthenticated
     @inlineCallbacks
@@ -319,7 +318,6 @@ class SubmissionInstance(BaseHandler):
         PUT finalize the submission
         """
         request = self.validate_message(self.request.body, requests.SubmissionDesc)
-
         # the .get method raise an exception if the token is invalid
         token = TokenList.get(token_id)
 

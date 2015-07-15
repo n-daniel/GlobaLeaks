@@ -56,7 +56,7 @@ WBStepElem = {
 
 SubmissionDesc = {
     'context_id': uuid_regexp,
-    'wb_steps': [ WBStepElem ],
+    # 'wb_steps': [ WBStepElem ], TODO: to be discussed
     'human_captcha_answer': int,
     'wb_e2e_public': unicode,
     'wb_signature': unicode,
