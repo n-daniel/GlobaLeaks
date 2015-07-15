@@ -191,7 +191,6 @@ AdminNotificationDesc = {
 AdminContextDesc = {
     'name': unicode,
     'description': unicode,
-    'receiver_introduction': unicode,
     'can_postpone_expiration': bool,
     'can_delete_submission': bool,
     'maximum_selectable_receivers': int,

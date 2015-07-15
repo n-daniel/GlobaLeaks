@@ -27,7 +27,6 @@ GLClient.controller('TipCtrl', ['$scope', '$http', '$route', '$location', '$moda
         }
       }
     });
-
   };
 
 }]);
@@ -65,4 +64,3 @@ TipOperationsCtrl = ['$scope', '$http', '$route', '$location', '$modalInstance',
   };
 
 }];
-

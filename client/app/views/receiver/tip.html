@@ -100,7 +100,7 @@
 </div>
 
 <hr />
-  
+
 <div class="row">
   <div class="col-md-12">
   <div class="TipPageSectionTitle" data-translate>Files</div>
@@ -150,14 +150,10 @@
                 <span>{{::file.name}}</span>
               </td>
               <td data-ng-show="file.status != 'unavailable'">
-                <form id="fileDownload" method="POST" action="{{::file.href}}" novalidate>
-                  <input type="hidden" name="x-session" value="{{session}}">
-                  <input type="hidden" name="xsrf-token" value="{{xsrf_token}}">
-                  <button class="btn btn-xs btn-default">
-                    <i class="glyphicon glyphicon-download"></i>
-                    <span data-translate>download</span>
-                  </button>
-                </form>
+                <a data-ng-click="download(file.href)" class="btn btn-xs btn-default">
+                  <i class="glyphicon glyphicon-download"></i>
+                  <span data-translate>download</span>
+                </a>
               </td>
               <td data-ng-show="file.status == 'unavailable'">
                 <div class="label label-warning" popover="{{'The file is unavailable due to an internal error.' | translate}}" popover-placement="bottom" popover-trigger="mouseenter" data-translate>file unavailable</div>

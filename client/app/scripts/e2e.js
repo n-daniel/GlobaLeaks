@@ -108,12 +108,10 @@ angular.module('e2e', []).
           numBits: 2048,
           userId: "randomuser@globaleaks.org",
           unlocked: true,
-          created: new Date(42),
+          created: new Date(0),
           salt: salt,
           keycode: keycode
         }).then(function(keyPair){
-          keyPair.key.primaryKey.created = new Date(42);
-          keyPair.key.subKeys[0].subKey.created = new Date(42);
           defer.resolve(keyPair);
         });
 

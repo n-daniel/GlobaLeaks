@@ -137,6 +137,10 @@ GLClient.controller('SubmissionCtrl',
   };
 
   $scope.incrementStep = function() {
+    if ($scope.skip_first_step === false && $scope.selection === 0) {
+      $scope.submission.register_selected_receivers();
+    }
+
     if ($scope.hasNextStep()) {
       $scope.selection++;
     }
@@ -175,6 +179,7 @@ GLClient.controller('SubmissionCtrl',
       if ((!$scope.receivers_selectable || !$scope.submission.context.show_receivers)) {
         $scope.skip_first_step = true;
         $scope.selection = 1;
+        $scope.submission.register_selected_receivers();
       } else {
         $scope.skip_first_step = false;
         $scope.selection = 0;

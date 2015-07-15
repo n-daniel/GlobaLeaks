@@ -23,11 +23,12 @@ reactor_override = None
 
 
 class GLSession(tempobj.TempObj):
-    def __init__(self, user_id, user_role, user_status):
+    def __init__(self, user_id, user_role, user_status, user_key):
         self.user_role = user_role
         self.user_id = user_id
         self.user_role = user_role
         self.user_status = user_status
+        self.user_key = user_key
         tempobj.TempObj.__init__(self,
                                  GLSetting.sessions,
                                  rstr.xeger(r'[A-Za-z0-9]{42}'),
@@ -220,7 +221,7 @@ def login_wb(store, authentication_sign):
     log.debug("Whistleblower login: Valid receipt")
     wb_tip.last_access = utility.datetime_now()
     store.commit()  # the transact was read only! on success we apply the commit()
-    return wb_tip.id, 'enabled', False
+    return wb_tip.id, 'enabled', False, ''
 
 
 @transact_ro  # read only transact; manual commit on success needed
@@ -239,7 +240,7 @@ def login(store, username, password, role):
     log.debug("Login: Success (%s)" % role)
     user.last_login = utility.datetime_now()
     store.commit()  # the transact was read only! on success we apply the commit()
-    return user.id, user.state, user.password_change_needed
+    return user.id, user.state, user.password_change_needed, user.e2e_key_private
 
 
 class AuthenticationHandler(BaseHandler):
@@ -248,7 +249,7 @@ class AuthenticationHandler(BaseHandler):
     """
     session_id = None
 
-    def generate_session(self, user_id, role, status):
+    def generate_session(self, user_id, role, status, key):
         """
         Args:
             role: can be either 'admin', 'wb' or 'receiver'
@@ -257,7 +258,7 @@ class AuthenticationHandler(BaseHandler):
                 case of an admin it will be set to 'admin', in the case of the
                 'wb' it will be the whistleblower id.
         """
-        session = GLSession(user_id, role, status)
+        session = GLSession(user_id, role, status, key)
         self.session_id = session.id
         return session
 
@@ -273,7 +274,8 @@ class AuthenticationHandler(BaseHandler):
             'user_id': self.current_user.user_id,
             'session_expiration': int(self.current_user.getTime()),
             'status': self.current_user.user_status,
-            'password_change_needed': False
+            'password_change_needed': False,
+            'e2e_key_private': self.current_user.user_key
         }
 
         self.write(auth_answer)
@@ -305,10 +307,10 @@ class AuthenticationHandler(BaseHandler):
                 log.debug("Accepted login request on Tor2web for role '%s'" % role)
 
         if role == 'receiver' or role == 'admin':
-            user_id, status, pcn = yield login(username, password, role)
+            user_id, status, pcn, key = yield login(username, password, role)
 
         elif role == 'wb':
-            user_id, status, pcn = yield login_wb(password)
+            user_id, status, pcn, key = yield login_wb(password)
 
         yield self.uniform_answers_delay()
 
@@ -316,7 +318,7 @@ class AuthenticationHandler(BaseHandler):
             GLSetting.failed_login_attempts += 1
             raise errors.InvalidAuthentication
 
-        session = self.generate_session(user_id, role, status)
+        session = self.generate_session(user_id, role, status, key)
 
         auth_answer = {
             'role': role,
@@ -325,6 +327,7 @@ class AuthenticationHandler(BaseHandler):
             'session_expiration': int(GLSetting.sessions[session.id].getTime()),
             'status': session.user_status,
             'password_change_needed': pcn,
+            'e2e_key_private': session.user_key
         }
 
         self.write(auth_answer)

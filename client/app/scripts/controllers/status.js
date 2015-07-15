@@ -107,6 +107,26 @@ GLClient.controller('StatusCtrl',
       $scope.tip.newMessageContent = '';
     };
 
+    $scope.download = function (url){
+      $http.post(url, {'x-session': $scope.session, 'xsrf-token': $scope.xsrf_token}).
+        success(function(data, status, headers, config) {
+          var proxy = new openpgp.AsyncProxy('/scripts/crypto/openpgp.worker.js');
+          console.log("aaaaaaaaaaaaa");
+          console.log(openpgp.message.fromBinary(data));
+          proxy.decryptMessage(Authentication.e2e_key_private, openpgp.message.fromBinary(data)).then(function(data1) {
+            console.log(data);
+            console.log(data1);
+          });
+
+          // this callback will be called asynchronously
+          // when the response is available
+        }).
+        error(function(data, status, headers, config) {
+          // called asynchronously if an error occurs
+          // or server returns response with an error status.
+        });
+    }
+
   }]);
 
 GLClient.controller('FileDetailsCtrl', ['$scope', function($scope){

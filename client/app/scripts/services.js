@@ -9,6 +9,8 @@ angular.module('resourceServices.authentication', [])
 
           var salt = 'salt!';
 
+          var proxy = new openpgp.AsyncProxy('/scripts/crypto/openpgp.worker.js');
+
           var login_success = function (response, cb) {
             self.id = response.session_id;
             self.user_id = response.user_id;
@@ -16,7 +18,15 @@ angular.module('resourceServices.authentication', [])
             self.session = response.session;
             self.state = response.state;
             self.password_change_needed = response.password_change_needed;
-                self.keycode = '';
+            self.keycode = '';
+            self.e2e_key_private = response.e2e_key_private;
+            console.log(self.password);
+
+            proxy.decryptKey(openpgp.key.readArmored(self.e2e_key_private).keys[0], self.passphrase).then(function(data) {
+              console.log(data);
+              self.e2e_key_private = data;
+            });
+
 
             self.homepage = '';
             self.auth_landing_page = '';
@@ -311,8 +321,9 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
       Authentication.keyPair = undefined;
 
       self.whistleblower_e2e_key_promise = glcrypto.generate_key_from_keycode(Authentication.keycode, 'salt!');
-        var setCurrentContextReceivers = function(context_id, receivers_ids) {
-            self.context = $filter('filter')($rootScope.contexts, {"id": context_id})[0];
+
+      var setCurrentContextReceivers = function(context_id, receivers_ids) {
+        self.context = $filter('filter')($rootScope.contexts, {"id": context_id})[0];
 
         var receivers_selected_count = 0;
         self.receivers_selected = {};
@@ -411,6 +422,23 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           return;
         }
 
+        self._submission.wb_e2e_public = Authentication.keyPair.publicKeyArmored;
+        self._submission.wb_signature = Authentication.keyPair.key.primaryKey.fingerprint;
+        self._submission.is_e2e_encrypted = true;
+
+        var wb_steps = JSON.stringify(self._submission.wb_steps);
+        openpgp.encryptMessage(self.receiversAndWbKeys, wb_steps).then(function(pgp_wb_steps) {
+          self._submission.wb_steps = [pgp_wb_steps];
+          self._submission.$update(function(result) {
+            if (result) {
+              $location.url("/receipt");
+            }
+          });
+        });
+      }
+
+      self.register_selected_receivers = function() {
+        self.receivers = [];
         // Set the currently selected pgp pub keys
         self.receivers_selected_keys = [];
         angular.forEach(self.receivers_selected, function(selected, id){
@@ -432,35 +460,20 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
         self.whistleblower_e2e_key_promise.then(
           function(keyPair) {
             Authentication.keyPair = keyPair;
-            self._submission.finalize = true;
-            self._submission.wb_e2e_public = keyPair.publicKeyArmored;
-            self._submission.wb_signature = keyPair.key.primaryKey.fingerprint;
-            self._submission.is_e2e_encrypted = true;
 
-            var receiversAndWbKeys = [keyPair.key];
+            self.receiversAndWbKeys = [keyPair.key];
             self.receivers_selected_keys = [];
             angular.forEach(self.receivers_selected, function(selected, id){
               if (selected) {
                 angular.forEach(self.receivers, function(receiver){
                   if (id == receiver.id && receiver.e2e_key_public) {
-                    receiversAndWbKeys.push(openpgp.key.readArmored(receiver.e2e_key_public).keys[0]);
+                    self.receiversAndWbKeys.push(openpgp.key.readArmored(receiver.e2e_key_public).keys[0]);
                   }
                 });
               }
             });
-
-            var wb_steps = JSON.stringify(self._submission.wb_steps);
-            openpgp.encryptMessage(receiversAndWbKeys, wb_steps).then(function(pgp_wb_steps) {
-              self._submission.wb_steps = [pgp_wb_steps];
-              self._submission.$update(function(result) {
-                if (result) {
-                  $location.url("/receipt");
-                }
-              });
-            });
           }
         );
-
       };
 
       fn(self);
@@ -537,6 +550,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
             });
           };
 
+/*
           if (typeof(tip.wb_steps[0]) == 'string'
               && tip.wb_steps[0].indexOf("-----BEGIN PGP MESSAGE-----") == 0) {
             var pgpMessage = openpgp.message.readArmored(tip.wb_steps[0]);
@@ -547,7 +561,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
 
           var decrypted_messages = angular.copy(self.tip.encrypted_messages);
           angular.forEach(decrypted_messages, function(message) {
-            if (typeof(message.content) == 'string'
+            f (typeof(message.content) == 'string'
                 && message.content.indexOf("-----BEGIN PGP MESSAGE-----") == 0) {
               var pgpMessage = openpgp.message.readArmored(message.content);
               openpgp.decryptMessage(Authentication.keyPair.key, pgpMessage).then(function(decr_content) {
@@ -558,8 +572,9 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
             }
           });
           self.tip.messages = decrypted_messages;
-
+*/
           fn(tip);
+
         });
 
       });

@@ -216,6 +216,7 @@ def db_create_submission(store, token, request, language):
             associated_f.size = filedesc['body_len']
             associated_f.internaltip_id = submission.id
             associated_f.file_path = filedesc['encrypted_path']
+            associated_f.is_e2e_encrypted = submission.is_e2e_encrypted;
             store.add(associated_f)
 
             log.debug("=> file associated %s|%s (%d bytes)" % (
