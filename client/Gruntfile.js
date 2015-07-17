@@ -44,7 +44,8 @@ module.exports = function(grunt) {
       server: {
         options: {
           port: 9000,
-          base: 'tests/browserchecks'
+          base: '/home/evilaliv3/Desktop',
+          keepalive:true
         }
       }
     },

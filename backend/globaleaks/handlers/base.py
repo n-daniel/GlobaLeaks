@@ -393,6 +393,7 @@ class BaseHandler(RequestHandler):
                     if len(chunk) == 0:
                         break
                     self.write(chunk)
+                    print len(chunk)
         except IOError as srcerr:
             log.err("Unable to open %s: %s " % (filepath, srcerr.strerror))
 
@@ -546,16 +547,13 @@ class BaseHandler(RequestHandler):
 
     def get_file_upload(self):
         try:
-            if (int(self.request.arguments['flowTotalSize'][0]) / (1024 * 1024)) > GLSetting.defaults.maximum_filesize:
-                log.err("File upload request rejected: file too big")
-                raise errors.FileTooBig(GLSetting.memory_copy.maximum_filesize)
-
             if self.request.arguments['flowIdentifier'][0] not in GLUploads:
                 f = GLSecureTemporaryFile(GLSetting.tmp_upload_path)
                 GLUploads[self.request.arguments['flowIdentifier'][0]] = f
             else:
                 f = GLUploads[self.request.arguments['flowIdentifier'][0]]
 
+            print self.request.arguments
             f.write(self.request.files['file'][0]['body'])
 
             if self.request.arguments['flowChunkNumber'][0] != self.request.arguments['flowTotalChunks'][0]:

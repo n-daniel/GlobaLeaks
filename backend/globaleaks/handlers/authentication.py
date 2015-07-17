@@ -235,7 +235,7 @@ def login(store, username, password, role):
 
     if not user or not security.check_password(password,  user.password, user.salt):
         log.debug("Login: Invalid credentials (%s)" % role)
-        return None, None, None
+        return None, None, None, None
 
     log.debug("Login: Success (%s)" % role)
     user.last_login = utility.datetime_now()

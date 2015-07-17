@@ -32,7 +32,7 @@
     "bootstrap-rtl": "3.3.4-rc1",
     "d3": "3.5.5",
     "FileSaver.js": "0.0.1",
-    "flow.js": "git://github.com/hellais/flow.js.git#feature/readHook",
+    "flow.js": "git://github.com/evilaliv3/flow.js.git#feature/readHook",
     "jszip": "2.4.0",
     "ng-flow": "~2.6.0",
     "ng-sortable": "1.2.2",

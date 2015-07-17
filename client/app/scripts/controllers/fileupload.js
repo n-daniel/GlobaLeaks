@@ -1,59 +1,115 @@
-GLClient.controller('WBFileUploadCtrl', ['$scope', function($scope) {
+GLClient.controller('WBFileUploadCtrl', ['$scope', 'Authentication', function($scope, Authentication) {
 
-  function encryptedFileStream(file, pub_keys) {
-    this.file = file;
+  function encryptedFileStream() {
+    this.read_function = 'slice';
 
-    this.message_stream = new openpgp.stream.MessageStream(pub_keys,
-                                                           file.size,
-                                                           file.name);
+    this.buffers = [];
+    this.buffered_total = 0;
 
-    this.buffer = new Uint8Array(0);
+    this.readStartPointer = 0;
+    this.readEndPointer = 0;
   };
 
-  encryptedFileStream.prototype.read = function(chunk, startByte, endByte, fileType) {
-    var neededBytes = (endByte - startByte),
-      self = this,
-      reader = new FileReader(),
-      file = chunk.fileObj.file;
+  $scope.efs = new encryptedFileStream();
+  $scope.chunk = null;
+  $scope.neededBytes = 0;
 
-    self.message_stream.setOnDataCallback(function(d) {
-      var tmp = new Uint8Array(self.buffer.length + d.length);
-      tmp.set(self.buffer, 0);
-      tmp.set(d, self.buffer.length);
-      self.buffer = tmp;
+  var initFileFn = function(fileObj) {
+    $scope.efs.file = fileObj.file;
+    console.log(fileObj.file);
 
-      if (neededBytes <= self.buffer.length) {
-        var data = self.buffer.subarray(0, neededBytes);
-        self.buffer = self.buffer.subarray(neededBytes, self.buffer.length);
-        chunk.readFinished(data);
+    if ($scope.efs.file.slice)
+      $scope.efs.read_function = 'slice';
+    else if ($scope.efs.file.mozSlice)
+      $scope.efs.read_function = 'mozSlice';
+    else if ($scope.efs.file.webkitSlice)
+      $scope.efs.read_function = 'webkitSlice';
+
+    console.log($scope.efs.read_function);
+
+    $scope.efs.origFileSize = $scope.efs.file.size;
+    console.log($scope.efs.origFileSize);
+
+    $scope.efs.message_stream = new openpgp.stream.MessageStream($scope.submission.receiversAndWbKeys,
+                                                                 $scope.efs.origFileSize,
+                                                                 'msg.txt',
+                                                                 {encoding: 'binary'});
+
+    fileObj.size = $scope.efs.message_stream.size - 1; // make flow know the final encrypted file size!
+
+    var onDataCallback = function(d) {
+      if (d.length) {
+        $scope.efs.buffers.push(d);
+        $scope.efs.buffered_total += d.length;
       }
-    });
+    
+      if ($scope.chunk && $scope.efs.buffered_total >= $scope.neededBytes) {
+        var buffer = new Uint8Array($scope.neededBytes);
+        var missing = $scope.neededBytes;
+        var _chunk = $scope.chunk;
+        $scope.chunk = null;
+        $scope.neededBytes = 0;
+
+        var offset = 0;
+        for (var i = 0; i < $scope.efs.buffers.length; i++) {
+          var copy_length = $scope.efs.buffers[i].length >= missing ? missing : $scope.efs.buffers[i].length;
+          buffer.set($scope.efs.buffers[i].subarray(0, copy_length), offset);
+          offset += copy_length;
+          missing -= copy_length;
+          $scope.efs.buffered_total -= copy_length;
+          if (missing === 0) {
+            if (copy_length != $scope.efs.buffers[i].length) {
+              $scope.efs.buffers[i] = $scope.efs.buffers[i].subarray(copy_length);
+              $scope.efs.buffers = $scope.efs.buffers.slice(i);
+            } else {
+              $scope.efs.buffers = $scope.efs.buffers.slice(i + 1);
+            }
+            _chunk.readFinished(new Blob([buffer.buffer]));
+            break;
+          }
+        }
+      }
+    };
+
+    $scope.efs.message_stream.setOnDataCallback(onDataCallback);
+
+  }
+
+  var _readFileFn = function(fileObj, startByte, endByte, fileType, chunk) {
+    var reader = new FileReader();
 
     reader.onloadend = function(e) {
       if (reader.result) {
-        console.log(reader.result);
-        self.message_stream.write(reader.result);
-        if (endByte === file.size) {
-          self.message_stream.end();
+        var data = new Uint8Array(reader.result);
+        $scope.efs.message_stream.write(data);
+        if ($scope.efs.readEndPointer === $scope.efs.origFileSize) {
+          $scope.efs.message_stream.end();
         }
       }
     }
 
-    var function_name = 'slice';
+    reader.readAsArrayBuffer($scope.efs.file[$scope.efs.read_function]($scope.efs.readStartPointer,
+                                                                       $scope.efs.readEndPointer,
+                                                                       fileType));
+  }
 
-    if (file.slice)
-      function_name = 'slice';
-    else if (file.mozSlice)
-      function_name = 'mozSlice';
-    else if (file.webkitSlice)
-      function_name = 'webkitSlice';
+  var readFileFn = function(fileObj, startByte, endByte, fileType, chunk) {
+    $scope.neededBytes = (endByte - startByte);
+    $scope.chunk = chunk;
 
-    reader.readAsBinaryString(file[function_name](startByte, 
-                                                  startByte + neededBytes,
-                                                  fileType));
-  };
+    $scope.efs.readStartPointer = $scope.efs.readEndPointer;
+    $scope.efs.readEndPointer = $scope.efs.readStartPointer + $scope.neededBytes;
+    if ($scope.efs.readEndPointer > $scope.efs.origFileSize) {
+      $scope.efs.readEndPointer = $scope.efs.origFileSize;
+    }
+    if ($scope.efs.readStartPointer != $scope.efs.readEndPointer) {
+      _readFileFn(fileObj, $scope.efs.readStartPointer, $scope.efs.readEndPointer, fileType, chunk);
+    } else {
+      onDataCallback([]);
+    }
+  }
 
-  $scope.$on('flow::fileAdded', function (event, $flow, flowFile) {
+  $scope.$on('flow::fileAdded', function(event, $flow, flowFile) {
     flowFile.done = false;
     $scope.uploads.push(flowFile);
 
@@ -64,12 +120,12 @@ GLClient.controller('WBFileUploadCtrl', ['$scope', function($scope) {
       event.preventDefault();
     }
 
-    angular.forEach($scope.upload_callbacks, function (callback) {
+    angular.forEach($scope.upload_callbacks, function(callback) {
       callback();
     });
   });
 
-  $scope.$on('flow::fileSuccess', function (event, $flow, flowFile) {
+  $scope.$on('flow::fileSuccess', function(event, $flow, flowFile) {
     var arrayLength = $scope.uploads.length;
     for (var i = 0; i < arrayLength; i++) {
       if ($scope.uploads[i].uniqueIdentifier === flowFile.uniqueIdentifier) {
@@ -77,7 +133,7 @@ GLClient.controller('WBFileUploadCtrl', ['$scope', function($scope) {
       }
     }
 
-    angular.forEach($scope.upload_callbacks, function (callback) {
+    angular.forEach($scope.upload_callbacks, function(callback) {
       callback();
     });
 
@@ -86,16 +142,8 @@ GLClient.controller('WBFileUploadCtrl', ['$scope', function($scope) {
   $scope.flow_init = {
     target: $scope.fileupload_url,
     headers: $scope.get_auth_headers(),
-    preprocess: function(chunk) {
-      var encrypted_file_stream = new encryptedFileStream(chunk.fileObj, $scope.submission.receiversAndWbKeys);
-      chunk.fileObj.encrypted_file_stream = encrypted_file_stream;
-      console.log(encrypted_file_stream.message_stream.size);
-      chunk.fileObj.size = encrypted_file_stream.message_stream.size;
-      chunk.preprocessFinished();
-    },
-    read: function(chunk, startByte, endByte, fileType) {
-      chunk.fileObj.encrypted_file_stream.read(chunk, startByte, endByte, fileType);
-    }
+    initFileFn: initFileFn,
+    readFileFn: readFileFn
   }
 
 }]);

@@ -1,8 +1,10 @@
 <div data-ng-controller="WBFileUploadCtrl">
-  <div flow-init="flow_init" flow-files-submitted="$flow.upload()">
-    <span id="fileupload" class="btn btn-success fileinput-button" data-ng-class="{disabled: disabled || (fileupload_mode == 'single' && uploads.length)}" flow-btn>
-      <i class="glyphicon glyphicon-paperclip"></i>
-      <span data-translate>Add file</span>
-    </span>
+  <div data-ng-if="flow_init">
+    <div flow-init="flow_init" flow-files-submitted="$flow.upload()">
+      <span id="fileupload" class="btn btn-success fileinput-button" data-ng-class="{disabled: disabled || (fileupload_mode == 'single' && uploads.length)}" flow-btn>
+        <i class="glyphicon glyphicon-paperclip"></i>
+        <span data-translate>Add file</span>
+      </span>
+    </div>
   </div>
 </div>

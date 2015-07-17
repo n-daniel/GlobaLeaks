@@ -438,7 +438,6 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
       }
 
       self.register_selected_receivers = function() {
-        self.receivers = [];
         // Set the currently selected pgp pub keys
         self.receivers_selected_keys = [];
         angular.forEach(self.receivers_selected, function(selected, id){
@@ -457,17 +456,26 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           }
         });
 
+        console.log(self.whistleblower_e2e_key_promise);
         self.whistleblower_e2e_key_promise.then(
           function(keyPair) {
+            console.log("aaaa");
             Authentication.keyPair = keyPair;
+            Authentication.e2e_key_private = keyPair.key;
+            console.log(keyPair);
 
             self.receiversAndWbKeys = [keyPair.key];
+            console.log(self.receiversAndWbKeys);
             self.receivers_selected_keys = [];
             angular.forEach(self.receivers_selected, function(selected, id){
+              console.log(selected);
               if (selected) {
                 angular.forEach(self.receivers, function(receiver){
+                  console.log(id);
+                  console.log(receiver.id);
                   if (id == receiver.id && receiver.e2e_key_public) {
                     self.receiversAndWbKeys.push(openpgp.key.readArmored(receiver.e2e_key_public).keys[0]);
+                    console.log(self.receiversAndWbKeys);
                   }
                 });
               }
@@ -733,7 +741,7 @@ angular.module('resourceServices', ['ngResource', 'resourceServices.authenticati
           glcrypto.generate_key_from_keycode(keycode, 'salt!').then(
             function(keyPair) {
               Authentication.keycode = keycode;
-              Authentication.KeyPair = keyPair;
+              Authentication.keyPair = keyPair;
               login();
             }
           );

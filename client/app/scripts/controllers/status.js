@@ -108,18 +108,24 @@ GLClient.controller('StatusCtrl',
     };
 
     $scope.download = function (url){
-      $http.post(url, {'x-session': $scope.session, 'xsrf-token': $scope.xsrf_token}).
+      $http.post(url,
+                 {'x-session': $scope.session, 'xsrf-token': $scope.xsrf_token},
+                 {responseType: 'arraybuffer'}).
         success(function(data, status, headers, config) {
-          var proxy = new openpgp.AsyncProxy('/scripts/crypto/openpgp.worker.js');
-          console.log("aaaaaaaaaaaaa");
-          console.log(openpgp.message.fromBinary(data));
-          proxy.decryptMessage(Authentication.e2e_key_private, openpgp.message.fromBinary(data)).then(function(data1) {
-            console.log(data);
-            console.log(data1);
-          });
+          data = new Uint8Array(data);
 
-          // this callback will be called asynchronously
-          // when the response is available
+          var packetList = new openpgp.packet.List(),
+            encrypted_message;
+
+          packetList.read(openpgp.util.Uint8Array2str(data));
+          encrypted_message = new openpgp.message.Message(packetList);
+          var proxy = new openpgp.AsyncProxy('/scripts/crypto/openpgp.worker.js');
+          console.log(Authentication.e2e_key_private);
+          proxy.decryptMessage(Authentication.e2e_key_private, encrypted_message, 'binary').then(function(data1) {
+            data1 = openpgp.util.str2Uint8Array(data1);
+            console.log((new Blob([data1.buffer])).size);
+            saveAs(new Blob([data1.buffer], {type: "application/octet-stream:charset=binary"}), "test", true);
+          });
         }).
         error(function(data, status, headers, config) {
           // called asynchronously if an error occurs
