@@ -1,0 +1,27 @@
+<div class="submissionField row" data-ng-init="identity=false">
+  <div class="col-md-8">
+    <label>
+      <span class="fieldLabel">Non hai al momento fornito le tue generalità</span>
+    </label>
+    <a href="" data-content="Chiarimento a popup..." popover="Chiarimento a popup..." popover-placement="right" popover-trigger="mouseenter">
+      <i class="glyphicon glyphicon-question-sign"></i>
+    </a>
+    <div class="FieldDescription">Chiarimento in linea</div>
+    <div data-ng-show="!identity">
+      <br />
+      <button class="btn btn-primary"
+              data-ng-click="identity=true">
+        <span data-translate>Fornisci le tue generalità</span>
+      </button>
+    </div>
+    <div data-ng-show="identity" style="padding-left: 15px">
+      <div data-ng-include="'views/submission/identity_form.html'"></div>
+      <br />
+      <button class="btn btn-primary"
+              data-ng-click="">
+        <span data-translate>Invia</span>
+      </button>
+    </div>
+  </div>
+</div>
+<hr />

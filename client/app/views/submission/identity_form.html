@@ -1,0 +1,153 @@
+<div class="row">
+   <div class="col-md-6">
+     <div class="submissionField">
+       <label>Nome <span class="text-red" data-ng-if="identity1 == undefined || identity1 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+       <input class="form-control" type="text" data-ng-model="identity1" />
+     </div>
+   </div>
+   <div class="col-md-6">
+     <div class="submissionField">
+       <label>Cognome <span class="text-red" data-ng-if="identity2 == undefined || identity2 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+       <input class="form-control" type="text" data-ng-model="identity2" />
+     </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <div class="submissionField">
+      <label>Sesso <span class="text-red" data-ng-if="identity3 == undefined || identity3 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+      <div>
+        <label><input type="radio" ng-model="sex" data-ng-click="identity3='m'" data-ng-checked="identity3 == 'm'" /> Maschio</label>
+        <label><input type="radio" ng-model="sex" data-ng-click="identity3='f'"  data-ng-checked="identity3 == 'f'" /> Femmina</label>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6">
+    <div class="submissionField">
+      <label>Data di nascita <span class="text-red" data-ng-if="identity4 == undefined || identity4 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+      <input class="form-control" type="text" data-ng-model="identity4" />
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="submissionField">
+      <label>Luogo di nascita <span class="text-red" data-ng-if="identity5 == undefined || identity5 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+      <input class="form-control" type="text" data-ng-model="identity5" />
+    </div>
+  </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Codice Fiscale <span class="text-red" data-ng-if="identity6 == undefined || identity6 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity6" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <label>Residenza / Domicilio</label>
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Indirizzo <span class="text-red" data-ng-if="identity7 == undefined || identity7 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+                    <input class="form-control" type="text" data-ng-model="identity7" />
+                </div>
+                <div class="col-md-3">
+                    <label>Civico <span class="text-red" data-ng-if="identity8 == undefined || identity8 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+                    <input class="form-control" type="text" data-ng-model="identity8" />
+                </div>
+                <div class="col-md-3">
+                    <label>Cap <span class="text-red" data-ng-if="identity9 == undefined || identity9 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+                    <input class="form-control" type="text" data-ng-model="identity9" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Città <span class="text-red" data-ng-if="identity10 == undefined || identity10 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+                    <input class="form-control" type="text" data-ng-model="identity10" />
+                </div>
+                <div class="col-md-3">
+                    <label>Provincia <span class="text-red" data-ng-if="identity11 == undefined || identity11 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+                    <input class="form-control" type="text" data-ng-model="identity11" />
+                </div>
+                <div class="col-md-3">
+                    <label>Stato <span class="text-red" data-ng-if="identity12 == undefined || identity12 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+                    <input class="form-control" type="text" data-ng-model="identity12" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="submissionField">
+            <label>Telefono <span class="text-red" data-ng-if="identity13 == undefined || identity13 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity13" />
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="submissionField">
+            <label>Email <span class="text-red" data-ng-if="identity14 == undefined || identity14 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity14" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Qualifica di servizio attuale <span class="text-red" data-ng-if="identity15 == undefined || identity15 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity15" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Incarico (Ruolo) di servizio attuale <span class="text-red" data-ng-if="identity16 == undefined || identity16 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity16" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Unità organizzativa e sede di servizio attuale <span class="text-red" data-ng-if="identity17 == undefined || identity17 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity17" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Qualifica di servizio all'epoca del fatto segnalato <span class="text-red" data-ng-if="identity18 == undefined8 || identity1 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity18" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Incarico (Ruolo) all'epoca del fatto segnalato <span class="text-red" data-ng-if="identity19 == undefined || identity19 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity19" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Unità organizzativa e sede di servizio all'epoca del fatto segnalato <span class="text-red" data-ng-if="identity20 == undefined || identity20 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity20" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="submissionField">
+            <label>Incarico (Ruolo) di servizio all'epoca del fatto segnalato <span class="text-red" data-ng-if="identity21 == undefined || identity21 == ''" popover="{{'This field is mandatory' | translate}}" popover-placement="right" popover-trigger="mouseenter">*</span></label>
+            <input class="form-control" type="text" data-ng-model="identity21" />
+        </div>
+    </div>
+</div>

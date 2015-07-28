@@ -1,0 +1,33 @@
+<div class="submissionField row" data-ng-init="anonymouas = {}; anonymous['1']=true;anonymous['2']=undefined">
+  <div class="col-md-8">
+    <label>
+      <span class="fieldLabel">Vuoi fornire le tue generalità?</span>
+    </label>
+    <a href="" data-content="Chiarimento a popup..." popover="Chiarimento a popup..." popover-placement="right" popover-trigger="mouseenter">
+      <i class="glyphicon glyphicon-question-sign"></i>
+    </a>
+    <div class="FieldDescription">Fornendoci le tue generalità la segnalazione verrà presa in carico e gestita con la massima priorità e, se sei un dipendente pubblico, potrai godere delle tutele aggiuntive previste per i Whistleblowers come da D.lgs. 190/2012</div>
+    <div class="submissionFieldInput">
+      <label><input type="radio" ng-model="anonymous['1']" data-ng-click="anonymous['1']=true" data-ng-checked="anonymous['1'] == true" /> Sì</label>
+      <label><input type="radio" ng-model="anonymous['1']" data-ng-click="anonymous['1']=false"  data-ng-checked="anonymous['1'] == false" /> No</label>
+
+      <div data-ng-if="anonymous['1'] == true" style="padding-left: 15px">
+        <div data-ng-include="'views/submission/identity_form.html'"></div>
+      </div>
+      <div data-ng-if="anonymous['1'] == false && anonymous['2']!=true" style="padding-left: 15px">
+          <div class="alert alert-warning">
+              <label>Attenzione! Si è scelto di non dichiarare le proprie generalità!</label>
+              <div>Non dichiarando le proprie generalità la segnalazione sarà presa in considerazione solo se adeguatamente circostanziata e con tutti gli elementi informativi utili per verificarla indipendentemente dalla conoscenza del segnalante. Si ricorda che effettuando una segnalazione in forma anonima non si ottengono le tutele previste per i dipendenti pubblici come da D.lgs. 190/2012 e che la priorità di gestione sarà più bassa. Sarà comunque possibile dichiarare la tua identità in un secondo momento.</div>
+              <div>Vuoi comunque continuare ad effettuare la segnalazione in forma anonima?</div>
+              <label><input type="radio" ng-model="anonymous['2']" data-ng-click="anonymous['2']=true" data-ng-checked="anonymous['2'] == true" /> Sì</label>
+              <label><input type="radio" ng-model="anonymous['2']" data-ng-click="anonymous['1'] = true; anonymous['2']=undefined"  data-ng-checked="anonymous['2'] == false" /> No</label>
+          </div>
+      </div>
+      <div data-ng-if="anonymous['1']==false && anonymous['2']==true">
+          <div class="alert alert-warning">
+            <label>Ti ricordiamo che sarà comunque possibile fornire le tue generalità a seguito della tua segnalazione in forma anonima.</label>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

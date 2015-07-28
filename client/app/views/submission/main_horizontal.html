@@ -25,6 +25,7 @@
         <div class="preformatted" data-ng-if="step.description">{{step.description}}</div>
         <div class="row">
           <div class="col-md-7">
+            <div data-ng-if="$index == 3" data-ng-include="'views/submission/identity_submission.html'"></div>
             <div data-ng-include="'views/submission/form.html'"></div>
           </div>
           <div class="col-md-offset-1 col-md-4">

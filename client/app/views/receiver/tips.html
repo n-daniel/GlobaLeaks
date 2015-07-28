@@ -82,6 +82,7 @@
                popover-placement=""
                popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-inbox"></i>
+              <span>{{'Context' | translate}}</span>
               <span class="btn btn-xs" ng-show="sortKey == 'context'">
                 <span ng-show="!sortReverse" class="glyphicon glyphicon-triangle-bottom"></span>
                 <span ng-show="sortReverse" class="glyphicon glyphicon-triangle-top"></span>
@@ -106,6 +107,7 @@
                popover-placement="top"
                popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-time"></i>
+              <span>{{'Submission Date' | translate}}</span>
               <span class="btn btn-xs" ng-show="sortKey == 'creation_date'">
                 <span ng-show="!sortReverse" class="glyphicon glyphicon-triangle-bottom"></span>
                 <span ng-show="sortReverse" class="glyphicon glyphicon-triangle-top"></span>
@@ -118,18 +120,22 @@
                popover-placement="top"
                popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-hourglass"></i>
+              <span>{{'Expiration Date' | translate}}</span>
               <span class="btn btn-xs" ng-show="sortKey == 'expiration_date'">
                 <span ng-show="!sortReverse" class="glyphicon glyphicon-triangle-bottom"></span>
                 <span ng-show="sortReverse" class="glyphicon glyphicon-triangle-top"></span>
               </span>
             </span>
           </th>
+          <th>Stato</th>
+          <th>Generalità</th>
           <th>
             <span ng-click="sortKey = 'files'; sortReverse = !sortReverse"
                popover="{{'Files' | translate}}"
                popover-placement="top"
                popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-file"></i>
+              <span>{{'Files' | translate}}</span>
               <span class="btn btn-xs" ng-show="sortKey == 'files'">
                 <span ng-show="!sortReverse" class="glyphicon glyphicon-triangle-bottom"></span>
                 <span ng-show="sortReverse" class="glyphicon glyphicon-triangle-top"></span>
@@ -142,6 +148,7 @@
                popover-placement="top"
                   popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-comment"></i>
+              <span>{{'Comments' | translate}}</span>
               <span class="btn btn-xs" ng-show="sortKey == 'comments'">
                 <span ng-show="!sortReverse" class="glyphicon glyphicon-triangle-bottom"></span>
                 <span ng-show="sortReverse" class="glyphicon glyphicon-triangle-top"></span>
@@ -154,6 +161,7 @@
                popover-placement="top"
                popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-envelope"></i>
+              <span>{{'Messages' | translate}}</span>
               <span class="btn btn-xs" ng-show="sortKey == 'messages'">
                 <span ng-show="!sortReverse" class="glyphicon glyphicon-triangle-bottom"></span>
                 <span ng-show="sortReverse" class="glyphicon glyphicon-triangle-top"></span>
@@ -172,6 +180,7 @@
                popover-placement="top"
                popover-trigger="mouseenter">
               <i class="glyphicon glyphicon-list-alt"></i>
+              <span>{{'Preview' | translate}}</span>
             </span>
           </th>
         </tr>
@@ -190,6 +199,8 @@
           <td>{{::tip.label}}</td>
           <td>{{::tip.creation_date | date:'dd-MM-yyyy HH:mm'}}</td>
           <td>{{::tip.expiration_date | date:'dd-MM-yyyy HH:mm'}}</td>
+          <td><span>{{$index%3?'Presa in carico':'Archiviata'}}</span></td>
+          <td><span>{{$index%2?'Fornite':'Non fornite'}}</span></td>
           <td>{{::tip.file_counter}}</td>
           <td>{{::tip.comment_counter}}</td>
           <td>{{::tip.message_counter}}</td>
@@ -211,3 +222,4 @@
     </table>
   </div>
 </div>
+Non definito':'Presa in carico' 'In istruttoria' 'Archiviata' 'Inoltrata ad autorità''

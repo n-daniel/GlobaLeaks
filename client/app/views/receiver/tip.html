@@ -41,6 +41,21 @@
     </div>
 
     <div class="pull-right">
+      <a
+         href="#/custodian"
+         class="btn btn-default">
+        <span class="glyphicon glyphicon-asterisk"></span>
+      </a>
+      <a data-ng-show="workflow>1"
+         data-ng-click="decreaseWorkflow()"
+         class="btn btn-default">
+        <span class="glyphicon glyphicon-arrow-left"></span>
+      </a>
+      <a data-ng-show="workflow<6"
+         data-ng-click="increaseWorkflow()"
+         class="btn btn-default">
+        <span class="glyphicon glyphicon-arrow-right"></span>
+      </a>
       <a id="link-preferences"
          href="#/receiver/preferences"
          popover="{{'Preferences' | translate}}"
@@ -51,26 +66,26 @@
       </a>
     </div>
   </div>
-</div>
-
-<div class="row" data-ng-show="preferences.pgp_key_status != 'enabled'">
-  <div class="col-md-12">
-    <div class="alert alert-warning">
-      <i class="glyphicon glyphicon-warning-sign"></i>
-      <strong><span data-translate>Warning!</span></strong>
-      <span data-translate>You have not configured your encryption keys, so the files will be stored on the GlobaLeaks server un-encrypted.</span>
-      <span data-translate>This may lead to unintended access to the files by the server administrator or others in case the server is compromised.</span>
-      <span data-translate>Please configure your PGP keys in the receiver preferences page.</span>
+  <br />
+  <div class="row" data-ng-show="false == true">
+    <div class="col-md-12">
+      <div class="alert alert-warning">
+        <i class="glyphicon glyphicon-warning-sign"></i>
+        <strong><span data-translate>Warning!</span></strong>
+        <span data-translate>You have not configured your encryption keys, so the files will be stored on the GlobaLeaks server un-encrypted.</span>
+        <span data-translate>This may lead to unintended access to the files by the server administrator or others in case the server is compromised.</span>
+        <span data-translate>Please configure your PGP keys in the receiver preferences page.</span>
+      </div>
     </div>
   </div>
-</div>
-<div class="row" data-ng-show="tip_unencrypted">
-  <div class="col-md-12">
-    <div class="alert alert-warning">
-      <i class="glyphicon glyphicon-warning-sign"></i>
-      <strong><span data-translate>Warning!</span></strong>
-      <span data-translate>One or more of the receivers of this tip has not configured a PGP key.</span>
-      <span data-translate>This means that the submitted files will be stored in plaintext on the server.</span>
+  <div class="row" data-ng-show="false == true">
+    <div class="col-md-12">
+      <div class="alert alert-warning">
+        <i class="glyphicon glyphicon-warning-sign"></i>
+        <strong><span data-translate>Warning!</span></strong>
+        <span data-translate>One or more of the receivers of this tip has not configured a PGP key.</span>
+        <span data-translate>This means that the submitted files will be stored in plaintext on the server.</span>
+      </div>
     </div>
   </div>
 </div>
@@ -82,7 +97,9 @@
   </div>
 
   <div class="col-md-6">
-    <div data-ng-include="'views/partials/tip_receiver_list.html'"></div>
+    <div class="TipSectionBox" data-ng-include="'views/submission/tip_status.html'"></div>
+    <div class="TipSectionBox" data-ng-include="'views/submission/identity_tip_receiver.html'"></div>
+    <div data-ng-if="tip.context.show_receivers" data-ng-include="'views/partials/tip_receiver_list.html'"></div>
   </div>
 </div>
 
