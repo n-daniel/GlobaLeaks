@@ -1,97 +1,90 @@
 <div>
-  <div class="submissionField row" data-ng-if="workflow==1">
-    <div class="col-md-8">
-      <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">Non disponibile</span>
+  <div class="submissionField" data-ng-if="workflow==1">
+    <span class="TipPageSectionTitle">Generalità del segnalante:</span>&nbsp;<span style="font-size: 20px">non disponibili</span>
+  </div>
+  <div class="submissionField" data-ng-if="workflow==2">
+    <span class="TipPageSectionTitle">Generalità del segnalante:</span>&nbsp;<span style="font-size: 20px">disponibili</span>
+    <div>
+      <a class="btn btn-primary"
+         data-ng-click="increaseWorkflow()">
+        <span>Richiedi accesso alle generalità del segnalante</span>
+      </a>
     </div>
   </div>
-  <div class="submissionField row" data-ng-if="workflow==2">
-    <div class="col-md-8">
-      <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">Disponibile</span>
-      <div>
-        <a class="btn btn-primary"
-           data-ng-click="increaseWorkflow()">
-          <span>Richiedi accesso al custode delle identità dei whistleblower</span>
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="submissionField row" data-ng-if="workflow==3">
-    <div class="col-md-8">
-      <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">Disponibile</span>
-      <div>
-        <label>Richiedi accesso al custode delle identità dei whistleblower</label>
-        <div class="submissionField">
-          <textarea class="form-control msd-elastic" data-ng-model="reason" placeholder="Motivazione"></textarea>
-          <div class="has-error" data-ng-show="reason == undefined || reason == ''">
-            <span data-translate>Questo campo è obbligatorio</span>
-          </div>
+  <div class="submissionField" data-ng-if="workflow==3">
+    <span class="TipPageSectionTitle">Generalità del segnalante:</span>&nbsp;<span style="font-size: 20px">disponibili</span>
+    <div>
+      <label>Richiedi accesso alle generalità del segnalante</label>
+      <div class="submissionField">
+        <textarea class="form-control msd-elastic" data-ng-model="reason" placeholder="Motivazione"></textarea>
+        <div class="has-error" data-ng-show="reason == undefined || reason == ''">
+          <span data-translate>Questo campo è obbligatorio</span>
         </div>
-        <a class="btn btn-primary"
-           data-ng-disabled="reason == undefined || reason == ''"
-           data-ng-click="increaseWorkflow()">
-          <span>Invia</span>
-        </a>
       </div>
+      <a class="btn btn-primary"
+         data-ng-disabled="reason == undefined || reason == ''"
+         data-ng-click="increaseWorkflow()">
+        <span>Invia</span>
+      </a>
     </div>
   </div>
-  <div class="submissionField row" data-ng-if="workflow==4">
-    <div class="col-md-8">
-      <div>
-        <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">Richiesta per consultazione</span>
-      </div>
-      <div>
-        <span><label>Esito della richiesta:</label>&nbsp;Non autorizzata</span>
-      </div>
-      <div>
-        <a class="btn btn-primary"
-           data-ng-click="increaseWorkflow()">
-          <span>Richiedi nuovamente accesso al custode delle identità dei whistleblower</span>
-        </a>
-      </div>
+  <div class="submissionField" data-ng-if="workflow==4">
+    <div>
+      <span class="TipPageSectionTitle">Generalità del segnalante:</span>&nbsp;<span style="font-size: 20px">richieste per consultazione</span>
+    </div>
+    <div>
+      <span><label>Esito della richiesta:</label>&nbsp;in attesa di autorizzazione</span>
     </div>
   </div>
-  <div class="submissionField row" data-ng-if="workflow==5">
-    <div class="col-md-8">
-      <div>
-        <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">Richiesta per consultazione</span>
-      </div>
-      <div>
-        <span><label>Esito della richiesta:</label>&nbsp;Non autorizzata</span>
-      </div>
-      <div>
-        <label>Richiedi nuovamente accesso al custode delle identità dei whistleblower</label>
-        <div class="submissionField">
-          <textarea class="form-control msd-elastic" data-ng-model="reason" placeholder="Motivazione"></textarea>
-          <div class="has-error" data-ng-show="reason == undefined || reason == ''">
-            <span data-translate>Questo campo è obbligatorio</span>
-          </div>
+  <div class="submissionField" data-ng-if="workflow==5">
+    <div>
+      <span class="TipPageSectionTitle">Generalità del segnalante:</span>&nbsp;<span style="font-size: 20px">richieste per consultazione</span>
+    </div>
+    <div>
+      <div class="submissionField"><label>Esito della richiesta:</label>&nbsp;non autorizzata</div>
+      <div class="submissionField"><label>Motivazione del rifiuto:</label>&nbsp;lorem ipsum dolor sit amet, consectetuer adipiscing elit.</div>
+    </div>
+    <div>
+      <a class="btn btn-primary"
+         data-ng-click="increaseWorkflow()">
+        <span>Effettua una nuova richiesta</span>
+      </a>
+    </div>
+  </div>
+  <div class="submissionField" data-ng-if="workflow==6">
+    <div>
+      <span class="TipPageSectionTitle">Generalità del segnalante:</span>&nbsp;<span style="font-size: 20px">richieste per consultazione</span>
+    </div>
+    <div>
+      <div class="submissionField"><label>Esito della richiesta:</label>&nbsp;non autorizzata</div>
+      <div class="submissionField"><label>Motivazione del rifiuto:</label>&nbsp;lorem ipsum dolor sit amet, consectetuer adipiscing elit.</div>
+    </div>
+    <div>
+      <label>Effettua una nuova richiesta</label>
+      <div class="submissionField">
+        <textarea class="form-control msd-elastic" data-ng-model="reason" placeholder="Motivazione"></textarea>
+        <div class="has-error" data-ng-show="reason == undefined || reason == ''">
+          <span data-translate>Questo campo è obbligatorio</span>
         </div>
-        <a class="btn btn-primary"
-           data-ng-disabled="reason == undefined || reason == ''"
-           data-ng-click="increaseWorkflow()">
-          <span>Invia</span>
-        </a>
       </div>
+      <a class="btn btn-primary"
+         data-ng-disabled="reason == undefined || reason == ''"
+         data-ng-click="increaseWorkflow()">
+        <span>Invia</span>
+      </a>
     </div>
   </div>
-  <div class="submissionField row" data-ng-if="workflow==6">
-    <div class="col-md-8">
-      <div>
-        <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">Richiesta per consultazione</span>
-      </div>
-      <div>
-        <span><label>Esito della richiesta:&nbsp;Autorizzata</label></span>
-      </div>
-      <div><label>Identita:</label></div>
-      <div style="padding-left: 20px">
-        <div><label>Nome:</label> Mario</div>
-        <div><label>Cognome</label> Rossi</div>
-        <div><label>Sesso:</label> M</div>
-        <div><label>Data di nascita:</label> 02/08/1985</div>
-        <div><label>Luogo di nascita:</label> Massa</div>
-        <div><label>Redidenza:</label> Viale Roma 100, Massa, Italia</div>
-      </div>
+  <div class="submissionField" data-ng-if="workflow==7">
+    <span class="TipPageSectionTitle">Identità del whistleblower:</span>&nbsp;<span style="font-size: 20px">richieste per consultazione</span>
+    <div div class="submissionField"><label>Esito della richiesta:</label>&nbsp; autorizzata</div>
+    <div><label>Identita:</label></div>
+    <div style="padding-left: 20px">
+      <div><label>Nome:</label> Mario</div>
+      <div><label>Cognome</label> Rossi</div>
+      <div><label>Sesso:</label> M</div>
+      <div><label>Data di nascita:</label> 02/08/1985</div>
+      <div><label>Luogo di nascita:</label> Massa</div>
+      <div><label>Redidenza:</label> Viale Roma 100, Massa, Italia</div>
     </div>
   </div>
 </div>
-</br />

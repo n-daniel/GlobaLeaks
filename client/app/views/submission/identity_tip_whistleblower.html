@@ -6,7 +6,7 @@
     <a href="" data-content="Chiarimento a popup..." popover="Chiarimento a popup..." popover-placement="right" popover-trigger="mouseenter">
       <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <div class="FieldDescription">Chiarimento in linea</div>
+    <div class="FieldDescription">Fornendoci le tue generalità la segnalazione verrà presa in carico e gestita con la massima priorità e, se sei un dipendente pubblico, potrai godere delle tutele aggiuntive previste per i Whistleblowers come da D.lgs. 190/2012</div>
     <div data-ng-show="!identity">
       <br />
       <button class="btn btn-primary"
@@ -14,14 +14,13 @@
         <span data-translate>Fornisci le tue generalità</span>
       </button>
     </div>
-    <div data-ng-show="identity" style="padding-left: 15px">
+    <div data-ng-show="identity" style="padding-top: 15px; padding-left: 15px">
       <div data-ng-include="'views/submission/identity_form.html'"></div>
       <br />
       <button class="btn btn-primary"
-              data-ng-click="">
+              data-ng-click="identity = true">
         <span data-translate>Invia</span>
       </button>
     </div>
   </div>
 </div>
-<hr />

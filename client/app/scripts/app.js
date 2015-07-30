@@ -42,6 +42,11 @@ var GLClient = angular.module('GLClient', [
         header_title: 'Receiver Interface',
         header_subtitle: 'Tip Status Page'
       }).
+      when('/tiplog', {
+        templateUrl: 'views/receiver/tiplog.html',
+        header_title: 'Registro della segnalazione',
+        header_subtitle: 'Receiver Interface'
+      }).
       when('/custodian', {
         templateUrl: 'views/receiver/custodian.html',
         header_title: 'Custode delle identità',
